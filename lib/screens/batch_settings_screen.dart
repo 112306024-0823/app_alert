@@ -1,0 +1,464 @@
+import 'package:flutter/material.dart';
+import '../models/batch.dart';
+import '../services/api_service.dart';
+import 'used_codes_screen.dart';
+
+/// 批次設定畫面
+class BatchSettingsScreen extends StatefulWidget {
+  const BatchSettingsScreen({super.key});
+
+  @override
+  State<BatchSettingsScreen> createState() => _BatchSettingsScreenState();
+}
+
+class _BatchSettingsScreenState extends State<BatchSettingsScreen> {  
+  final List<Batch> _batches = [];
+  Batch? _currentBatch;
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 標題和新增按鈕
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Batch',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w400,
+                      height: 42/28,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFF2B7FFF),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => _showCreateBatchDialog(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // 內容區域
+              Expanded(
+                child: _batches.isEmpty
+                    ? _buildEmptyState()
+                    : _buildBatchList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 空狀態（無批次時顯示）
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '尚無批次',
+            style: TextStyle(
+              fontSize: 17,
+              color: Color(0xFF99A1AF),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '點擊右上角 + 建立第一個批次',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF99A1AF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 批次列表
+  Widget _buildBatchList() {
+    return ListView(
+      children: [
+        _buildCurrentBatchSection(),
+      ],
+    );
+  }
+
+  /// 當前批次區塊
+  Widget _buildCurrentBatchSection() {
+    if (_currentBatch == null) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Current Batch',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  _currentBatch = null;
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _currentBatch!.name,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '● Active',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () {
+                      // TODO: Edit batch
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UsedCodesScreen(
+                              currentBatch: _currentBatch,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.visibility),
+                      label: const Text('View Record'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2B7FFF),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        // TODO: Duplicate batch
+                      },
+                      icon: const Icon(Icons.copy),
+                      label: const Text('Duplicate'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 建立新批次對話框
+  void _showCreateBatchDialog() {
+    final nameController = TextEditingController();
+    final startController = TextEditingController();
+    final endController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 標題欄
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'New Batch',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 表單內容
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF), 
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: nameController,
+                      label: 'Batch Name',
+                      hint: 'LCA1210',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: startController,
+                      label: 'Start Number',
+                      hint: '500',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: endController,
+                      label: 'End Number',
+                      hint: '8000',
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Create 按鈕
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => _handleCreateBatch(
+                    context,
+                    nameController.text,
+                    startController.text,
+                    endController.text,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2B7FFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Create',
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 輸入欄位
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF101828),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF717182),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF2B7FFF)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 處理建立批次
+  Future<void> _handleCreateBatch(
+    BuildContext context,
+    String name,
+    String start,
+    String end,
+  ) async {
+    if (name.isEmpty || start.isEmpty || end.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('請填寫所有欄位')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.createBatch(
+        name: name,
+        start: start,
+        end: end,
+      );
+
+      final newBatch = Batch(
+        id: response['id']?.toString() ?? 
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        startNumber: int.tryParse(start) ?? 0,
+        endNumber: int.tryParse(end) ?? 0,
+        isActive: true,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _batches.add(newBatch);
+        _currentBatch = newBatch;
+        _isLoading = false;
+      });
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('批次建立成功！'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('建立批次失敗：$e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
