@@ -397,6 +397,13 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           foregroundColor: const Color(0xFF101828),
                         ),
                         child: const Text('Set Active'),
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFD1D5DC)),
+                          foregroundColor: const Color(0xFF101828),
+                        ),
+                        child: const Text('Edit'),
                       ),
                     ),
                   ],
