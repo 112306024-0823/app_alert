@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/batch.dart';
 import '../services/api_service.dart';
-import 'used_codes_screen.dart';
 
 /// 批次設定畫面
 class BatchSettingsScreen extends StatefulWidget {
-  const BatchSettingsScreen({super.key});
+  /// 切換分頁回呼：index 與欲帶入的當前批次
+  final void Function(int newIndex, Batch? batch)? onSwitchTab;
+
+  const BatchSettingsScreen({super.key, this.onSwitchTab});
 
   @override
   State<BatchSettingsScreen> createState() => _BatchSettingsScreenState();
@@ -15,6 +17,27 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   final List<Batch> _batches = [];
   Batch? _currentBatch;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed sample data for preview; replace with API when ready
+    if (_batches.isEmpty) {
+      _batches.addAll([
+        Batch(id: 'a1', name: 'LCA1210', startNumber: 100, endNumber: 5000),
+        Batch(id: 'a2', name: 'LCA1213', startNumber: 2020, endNumber: 2050),
+        Batch(id: 'a3', name: 'LCB1211', startNumber: 5000, endNumber: 11000),
+      ]);
+      _currentBatch = Batch(
+        id: 'cur',
+        name: 'LCA1215',
+        startNumber: 2000,
+        endNumber: 10000,
+        isActive: true,
+        allowDuplicate: false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +117,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     return ListView(
       children: [
         _buildCurrentBatchSection(),
+        const SizedBox(height: 24),
+        _buildAllBatchSection(),
       ],
     );
   }
@@ -152,21 +177,17 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              '● Active',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
+                          const Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: Color(0xFF2B7FFF),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Active',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF2B7FFF),
                             ),
                           ),
                         ],
@@ -190,19 +211,46 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              // Ignore duplicate check - simple switch row
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Ignore duplicate check',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF101828),
+                        ),
+                      ),
+                    ),
+                    Switch(
+                      value: _currentBatch?.allowDuplicate ?? false,
+                      onChanged: (val) {
+                        if (_currentBatch == null) return;
+                        setState(() {
+                          _currentBatch = _currentBatch!.copyWith(allowDuplicate: val);
+                        });
+                      },
+                      activeColor: const Color(0xFF2B7FFF),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => UsedCodesScreen(
-                              currentBatch: _currentBatch,
-                            ),
-                          ),
-                        );
+                        // 透過上層回呼切換到 Used Codes 分頁（index=1）
+                        widget.onSwitchTab?.call(1, _currentBatch);
                       },
                       icon: const Icon(Icons.visibility),
                       label: const Text('View Record'),
@@ -213,23 +261,99 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // TODO: Duplicate batch
-                      },
-                      icon: const Icon(Icons.copy),
-                      label: const Text('Duplicate'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  /// All Batch 區塊
+  Widget _buildAllBatchSection() {
+    final others = _batches;
+    if (others.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'All Batch',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...others.map((b) => Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          b.name,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (b.allowDuplicate)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3CD),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'No-dup',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF856404),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${b.startNumber} - ${b.endNumber}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF6A7282),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _currentBatch = b;
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFD1D5DC)),
+                          foregroundColor: const Color(0xFF101828),
+                        ),
+                        child: const Text('Set Active'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )),
       ],
     );
   }

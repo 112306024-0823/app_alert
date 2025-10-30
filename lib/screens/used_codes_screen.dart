@@ -4,11 +4,13 @@ import '../services/api_service.dart';
 
 /// 已使用代碼畫面（階段四：App 查詢紀錄）
 class UsedCodesScreen extends StatefulWidget {
-  final Batch? currentBatch;
+  final Batch currentBatch;
+  final void Function(int newIndex)? onSwitchTab;
 
   const UsedCodesScreen({
     super.key,
-    this.currentBatch,
+    required this.currentBatch,
+    this.onSwitchTab,
   });
 
   @override
@@ -48,7 +50,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
         _codes = successLogs.map((log) {
           return CodeRecord(
             code: log['scannedCode']?.toString() ?? '',
-            status: log['status']?.toString() ?? 'Valid',
+            status: log['status']?.toString() ?? '',
             timestamp: _parseDateTime(log['timestamp']),
           );
         }).toList();
@@ -57,7 +59,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
         _alerts = alertLogs.map((log) {
           return AlertRecord(
             code: log['scannedCode']?.toString() ?? '',
-            alertType: log['alertType']?.toString() ?? 'Unknown',
+            alertType: log['status']?.toString() ?? '',
             timestamp: _parseDateTime(log['timestamp']),
           );
         }).toList();
@@ -105,18 +107,43 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 標題
-              const Text(
-                'Used Codes',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                ),
+              // 標題：顯示 Batch Name 與 Batch Range
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Batch Name: ${widget.currentBatch.name}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Batch Range: ${widget.currentBatch.startNumber} - ${widget.currentBatch.endNumber}',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFF6A7282),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               
-              // 當前批次資訊
-              if (widget.currentBatch != null) _buildCurrentBatchCard(),
+              
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3CD),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text(
+              'Duplicate check disabled for current batch',
+              style: TextStyle(fontSize: 13, color: Color(0xFF856404)),
+            ),
+          ),
               const SizedBox(height: 24),
               
               // 搜尋框和刷新按鈕
@@ -177,7 +204,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
         children: [
           Expanded(
             child: Text(
-              widget.currentBatch?.displayName ?? '',
+              widget.currentBatch.displayName,
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF101828),
@@ -225,7 +252,6 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
 
   /// Valid Codes 區塊
   Widget _buildValidCodesSection() {
-    final validCodes = _codes.where((c) => c.status == 'Valid').toList();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,7 +268,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
             ),
             Text(
-              '列印數：${validCodes.length}',
+              '列印數：${_codes.length}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF4A5565),
@@ -253,7 +279,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
         const SizedBox(height: 12),
         _buildTableHeader(['Code', 'Status', 'Time']),
         const SizedBox(height: 12),
-        ...validCodes.map((code) => _buildTableRow(
+        ..._codes.map((code) => _buildTableRow(
           code: code.code,
           status: code.status,
           time: code.timestamp,
@@ -430,7 +456,12 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       height: 48,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.pop(context);
+          // 切回 Batch Settings 主頁（index=0）。若無回呼則嘗試返回。
+          if (widget.onSwitchTab != null) {
+            widget.onSwitchTab!(0);
+          } else {
+            Navigator.pop(context);
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2B7FFF),

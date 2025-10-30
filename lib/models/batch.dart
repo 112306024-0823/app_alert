@@ -5,6 +5,7 @@ class Batch {
   final int startNumber;
   final int endNumber;
   final bool isActive;
+  final bool allowDuplicate; // whether duplicate validation is ignored for this batch
 
   Batch({
     required this.id,
@@ -12,6 +13,7 @@ class Batch {
     required this.startNumber,
     required this.endNumber,
     this.isActive = false,
+    this.allowDuplicate = false,
   });
 
   /// 檢查代碼是否在批次範圍內
@@ -21,6 +23,25 @@ class Batch {
 
   /// 取得批次的顯示名稱
   String get displayName => '$name ($startNumber - $endNumber)';
+
+  /// 建立一個修改部分欄位的新實例
+  Batch copyWith({
+    String? id,
+    String? name,
+    int? startNumber,
+    int? endNumber,
+    bool? isActive,
+    bool? allowDuplicate,
+  }) {
+    return Batch(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      startNumber: startNumber ?? this.startNumber,
+      endNumber: endNumber ?? this.endNumber,
+      isActive: isActive ?? this.isActive,
+      allowDuplicate: allowDuplicate ?? this.allowDuplicate,
+    );
+  }
 }
 
 /// 代碼記錄模型

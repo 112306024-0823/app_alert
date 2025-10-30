@@ -57,13 +57,13 @@ class ApiService {
   /// 參數：
   /// - token: FCM Token（例如 "c3po...R2D2"）
   /// 
-  /// API: POST /api/device/register
+  /// API: POST /api/Batch/register
   /// Body: { "fcmToken": "c3po...R2D2" }
   static Future<Map<String, dynamic>> registerDevice({
     required String token,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/device/register');
+      final url = Uri.parse('$baseUrl/api/Batch/register');
       
       final response = await http.post(
         url,
@@ -86,6 +86,42 @@ class ApiService {
     }
   }
 
+  /// 掃描代碼（測試掃描器）
+  /// 
+  /// 參數：
+  /// - code: 掃描的代碼（例如 "1234"）
+  /// 
+  /// 回傳：API 回應的 JSON 資料，包含驗證結果
+  /// 
+  /// API: POST /api/scan/validate
+  /// Body: { "code": "1234" }
+  static Future<Map<String, dynamic>> scanCode({
+    required String code,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/scan/validate');
+      
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'code': code,
+        }),
+      ).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'API 錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('掃描代碼失敗: $e');
+    }
+  }
+
   /// 階段四：取得警示紀錄（錯誤紀錄）
   /// 
   /// API: GET /api/log/alerts
@@ -97,7 +133,7 @@ class ApiService {
   /// }
   static Future<List<Map<String, dynamic>>> getAlertLogs() async {
     try {
-      final url = Uri.parse('$baseUrl/api/log/alerts');
+      final url = Uri.parse('$baseUrl/api/Batch/alerts');
       
       final response = await http.get(url).timeout(timeout);
 
@@ -118,18 +154,10 @@ class ApiService {
     }
   }
 
-  /// 階段四：取得成功紀錄
-  /// 
-  /// API: GET /api/log/success
-  /// 
-  /// Response Format:
-  /// {
-  ///   "count": 1,
-  ///   "logs": [...]
-  /// }
+
   static Future<List<Map<String, dynamic>>> getSuccessLogs() async {
     try {
-      final url = Uri.parse('$baseUrl/api/log/success');
+      final url = Uri.parse('$baseUrl/api/Batch/success');
       
       final response = await http.get(url).timeout(timeout);
 
@@ -150,7 +178,7 @@ class ApiService {
     }
   }
   
-  /// 測試 API 連線（用於開發階段）
+  /// 測試 API 連線
   static Future<bool> testConnection() async {
     try {
       final url = Uri.parse('$baseUrl/swagger/index.html');
@@ -161,4 +189,3 @@ class ApiService {
     }
   }
 }
-
