@@ -81,6 +81,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       }
     }
   }
+  
 
   /// 解析日期時間
   DateTime _parseDateTime(dynamic dateTime) {

@@ -1,6 +1,7 @@
 # flutter_application
 
-A new Flutter project.
+A new Flutter project. Flutter Alert APP
+
 
 ## Getting Started
 
