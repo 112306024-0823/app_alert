@@ -124,7 +124,7 @@ class ApiService {
 
   /// 階段四：取得警示紀錄（錯誤紀錄）
   /// 
-  /// API: GET /api/log/alerts
+  /// API: GET /api//alerts
   /// 
   /// Response Format:
   /// {
@@ -186,6 +186,55 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// 更新批次資訊
+  ///
+  /// API: POST /api/Batch/update
+  ///
+  /// 參數說明（依既有 create 命名推測）：
+  /// - id: 批次 ID（batchId）
+  /// - name: 批次名稱（batchName）
+  /// - start: 開始編號（startCode）
+  /// - end: 結束編號（endCode）
+  /// - allowDuplicate: 是否忽略重複檢查（選填）
+  /// - isActive: 是否為當前批次（選填）
+  static Future<Map<String, dynamic>> updateBatch({
+    required String id,
+    required String name,
+    required String start,
+    required String end,
+    bool? allowDuplicate,
+    bool? isActive,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/Batch/update');
+      final body = <String, dynamic>{
+        'batchId': id,
+        'batchName': name,
+        'startCode': start,
+        'endCode': end,
+      };
+      if (allowDuplicate != null) body['allowDuplicate'] = allowDuplicate;
+      if (isActive != null) body['isActive'] = isActive;
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      ).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'API 錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('更新批次失敗: $e');
     }
   }
 }

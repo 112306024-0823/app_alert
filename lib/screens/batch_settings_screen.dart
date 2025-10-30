@@ -225,7 +225,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                   IconButton(
                     icon: const Icon(Icons.edit),
                     onPressed: () {
-                      // TODO: Edit batch
+                      if (_currentBatch == null) return;
+                      _showEditBatchDialog(_currentBatch!);
                     },
                   ),
                 ],
@@ -382,6 +383,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _batches[i] = item.copyWith(isActive: item.id == b.id);
                             }
                           });
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})'),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFD1D5DC)),
@@ -507,6 +516,180 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         ),
       ),
     );
+  }
+
+  void _showEditBatchDialog(Batch batch) {
+    final nameController = TextEditingController(text: batch.name);
+    final startController = TextEditingController(text: batch.startNumber.toString());
+    final endController = TextEditingController(text: batch.endNumber.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 標題欄
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Edit Batch',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 表單內容
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFFF), 
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Column(
+                  children: [
+                    _buildTextField(
+                      controller: nameController,
+                      label: 'Batch Name',
+                      hint: batch.name,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: startController,
+                      label: 'Start Number',
+                      hint: batch.startNumber.toString(),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: endController,
+                      label: 'End Number',
+                      hint: batch.endNumber.toString(),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Update 按鈕
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => _handleUpdateBatch(
+                    context,
+                    batch,
+                    nameController.text,
+                    startController.text,
+                    endController.text,  
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2B7FFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Save',
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+      
+
+  /// 處理更新批次
+  Future<void> _handleUpdateBatch(
+    BuildContext context,
+    Batch original,
+    String name,
+    String start,
+    String end,
+  ) async {
+    if (name.isEmpty || start.isEmpty || end.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('請填寫所有欄位')),
+      );
+      return;
+    }
+
+    setState(() { _isLoading = true; });
+    try {
+      await ApiService.updateBatch(
+        id: original.id,
+        name: name,
+        start: start,
+        end: end,
+        allowDuplicate: original.allowDuplicate,
+        isActive: original.isActive,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        // 更新 _currentBatch 或列表中的資料
+        if (_currentBatch != null && _currentBatch!.id == original.id) {
+          _currentBatch = _currentBatch!.copyWith(
+            name: name,
+            startNumber: int.tryParse(start) ?? original.startNumber,
+            endNumber: int.tryParse(end) ?? original.endNumber,
+          );
+        }
+        for (var i = 0; i < _batches.length; i++) {
+          if (_batches[i].id == original.id) {
+            _batches[i] = _batches[i].copyWith(
+              name: name,
+              startNumber: int.tryParse(start) ?? original.startNumber,
+              endNumber: int.tryParse(end) ?? original.endNumber,
+            );
+          }
+        }
+        _isLoading = false;
+      });
+
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('批次已更新')), 
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _isLoading = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('更新失敗：$e')),
+      );
+    }
   }
 
   /// 輸入欄位

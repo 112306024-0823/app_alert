@@ -21,6 +21,8 @@ class Batch {
     return code >= startNumber && code <= endNumber;
   }
 
+  
+
   /// 取得批次的顯示名稱
   String get displayName => '$name ($startNumber - $endNumber)';
 
