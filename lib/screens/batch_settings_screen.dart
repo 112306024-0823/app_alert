@@ -123,6 +123,33 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     );
   }
 
+  /// 確認對話框
+  Future<bool> _showConfirm({
+    required String title,
+    required String message,
+    String confirmText = 'Confirm',
+    String cancelText = 'Cancel',
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(cancelText),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirmText),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   /// 當前批次區塊
   Widget _buildCurrentBatchSection() {
     if (_currentBatch == null) return const SizedBox();
@@ -140,14 +167,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _currentBatch = null;
-                });
-              },
-            ),
+            
           ],
         ),
         const SizedBox(height: 16),
@@ -232,8 +252,17 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                     ),
                     Switch(
                       value: _currentBatch?.allowDuplicate ?? false,
-                      onChanged: (val) {
+                      onChanged: (val) async {
                         if (_currentBatch == null) return;
+                        final enabling = val == true;
+                        final ok = await _showConfirm(
+                          title: enabling ? 'Enable ignore duplicate' : 'Disable ignore duplicate',
+                          message: enabling
+                              ? 'This will skip duplicate validation for the current batch.'
+                              : 'This will enable duplicate validation for the current batch.',
+                          confirmText: 'OK',
+                        );
+                        if (!ok) return;
                         setState(() {
                           _currentBatch = _currentBatch!.copyWith(allowDuplicate: val);
                         });
@@ -338,9 +367,20 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          final ok = await _showConfirm(
+                            title: 'Set Active',
+                            message: 'Set ${b.name} (${b.startNumber} - ${b.endNumber}) as the current batch?\nOther batches will be deactivated.',
+                            confirmText: 'Set Active',
+                          );
+                          if (!ok) return;
                           setState(() {
-                            _currentBatch = b;
+                            // 更新 current 與列表 isActive 標記
+                            _currentBatch = b.copyWith(isActive: true);
+                            for (var i = 0; i < _batches.length; i++) {
+                              final item = _batches[i];
+                              _batches[i] = item.copyWith(isActive: item.id == b.id);
+                            }
                           });
                         },
                         style: OutlinedButton.styleFrom(
