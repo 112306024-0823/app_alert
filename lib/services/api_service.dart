@@ -190,19 +190,54 @@ class ApiService {
     }
   }
 
-  /// 更新批次資訊
+  /// 取得批次清單
   ///
-  /// API: POST /api/Batch/update
+  /// API: GET /api/Batch/list
   ///
-  /// 參數說明（依既有 create 命名推測）：
-  /// - id: 批次 ID（batchId）
+  /// Response Format:
+  /// [
+  ///   {
+  ///     "ruleId": 2,
+  ///     "batchName": "testCase1",
+  ///     "startCode": "A001",
+  ///     "endCode": "A100",
+  ///     "isActive": true,
+  ///     "allowDuplicate": true,
+  ///     "createdAt": "2025-11-03T15:53:33.3079086"
+  ///   }
+  /// ]
+  static Future<List<Map<String, dynamic>>> getBatchList() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/Batch/list');
+      final response = await http.get(url).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          return List<Map<String, dynamic>>.from(data);
+        }
+        return [];
+      } else {
+        throw Exception('API 錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('取得批次清單失敗: $e');
+    }
+  }
+
+  /// 更新批次資訊（完整更新）
+  ///
+  /// API: PUT /api/Batch/update/{ruleId}
+  ///
+  /// 參數說明：
+  /// - ruleId: 批次 ID（放在 URL path 中）
   /// - name: 批次名稱（batchName）
   /// - start: 開始編號（startCode）
   /// - end: 結束編號（endCode）
   /// - allowDuplicate: 是否忽略重複檢查（選填）
   /// - isActive: 是否為當前批次（選填）
   static Future<Map<String, dynamic>> updateBatch({
-    required String id,
+    required String ruleId,
     required String name,
     required String start,
     required String end,
@@ -210,15 +245,90 @@ class ApiService {
     bool? isActive,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/Batch/update');
+      final url = Uri.parse('$baseUrl/api/Batch/update/$ruleId');
       final body = <String, dynamic>{
-        'batchId': id,
         'batchName': name,
         'startCode': start,
         'endCode': end,
       };
       if (allowDuplicate != null) body['allowDuplicate'] = allowDuplicate;
       if (isActive != null) body['isActive'] = isActive;
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      ).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'API 錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('更新批次失敗: $e');
+    }
+  }
+
+  /// 部分更新批次資訊（僅更新指定欄位）
+  ///
+  /// API: PATCH /api/Batch/update-partial/{ruleId}
+  ///
+  /// 參數說明：
+  /// - ruleId: 批次 ID（放在 URL path 中）
+  /// - allowDuplicate: 是否忽略重複檢查（選填）
+  /// - isActive: 是否為當前批次（選填）
+  ///
+  /// 用途：用於更新單一欄位，如切換 allowDuplicate 開關
+  static Future<Map<String, dynamic>> updateBatchPartial({
+    required String ruleId,
+    bool? allowDuplicate,
+    bool? isActive,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/Batch/update-partial/$ruleId');
+      final body = <String, dynamic>{};
+      if (allowDuplicate != null) body['allowDuplicate'] = allowDuplicate;
+      if (isActive != null) body['isActive'] = isActive;
+
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      ).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorBody = jsonDecode(response.body);
+        throw Exception(errorBody['message'] ?? 'API 錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('部分更新批次失敗: $e');
+    }
+  }
+
+  /// 設定批次為 Active
+  ///
+  /// API: POST /api/Batch/set-active
+  ///
+  /// 參數說明：
+  /// - ruleId: 批次 ID（放在 body 中）
+  ///
+  /// 用途：設定指定批次為當前 Active 批次，後端會自動將其他批次設為非 Active
+  static Future<Map<String, dynamic>> setBatchActive({
+    required String ruleId,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/Batch/set-active');
+      final body = <String, dynamic>{
+        'ruleId': int.tryParse(ruleId) ?? ruleId,
+      };
 
       final response = await http.post(
         url,
@@ -235,7 +345,7 @@ class ApiService {
         throw Exception(errorBody['message'] ?? 'API 錯誤: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('更新批次失敗: $e');
+      throw Exception('設定 Active 批次失敗: $e');
     }
   }
 }

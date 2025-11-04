@@ -21,20 +21,61 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    // Seed sample data for preview; replace with API when ready
-    if (_batches.isEmpty) {
-      _batches.addAll([
-        Batch(id: 'a1', name: 'LCA1210', startNumber: 100, endNumber: 5000),
-        Batch(id: 'a2', name: 'LCA1213', startNumber: 2020, endNumber: 2050),
-        Batch(id: 'a3', name: 'LCB1211', startNumber: 5000, endNumber: 11000),
-      ]);
-      _currentBatch = Batch(
-        id: 'cur',
-        name: 'LCA1215',
-        startNumber: 2000,
-        endNumber: 10000,
-        isActive: true,
-        allowDuplicate: false,
+    // 從 API 載入批次清單
+    _loadBatchesFromApi();
+  }
+
+  /// 從 API 載入批次清單
+  Future<void> _loadBatchesFromApi() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final items = await ApiService.getBatchList();
+      final loaded = items.map((m) {
+        // API 回傳的 startCode/endCode 可能是字串（如 "A001"）或數字
+        // 先嘗試轉換為數字，失敗則使用字串的 hash code 作為臨時值
+        final startCode = m['startCode']?.toString() ?? '';
+        final endCode = m['endCode']?.toString() ?? '';
+        final startNum = int.tryParse(startCode) ?? startCode.hashCode;
+        final endNum = int.tryParse(endCode) ?? endCode.hashCode;
+
+        return Batch(
+          id: m['ruleId']?.toString() ?? '', // API 使用 ruleId 而非 id
+          name: m['batchName']?.toString() ?? '',
+          startNumber: startNum,
+          endNumber: endNum,
+          isActive: m['isActive'] == true,
+          allowDuplicate: m['allowDuplicate'] == true,
+        );
+      }).toList();
+
+      // 找出當前 Active 批次
+      final activeBatches = loaded.where((b) => b.isActive).toList();
+
+      setState(() {
+        _batches.clear();
+        // 非 Active 的批次放入列表
+        _batches.addAll(loaded.where((b) => !b.isActive));
+        // Active 批次設為當前批次
+        _currentBatch = activeBatches.isNotEmpty ? activeBatches.first : null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+      });
+
+      // API 失敗時顯示錯誤訊息，不使用假資料
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('載入批次失敗：$e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
       );
     }
   }
@@ -264,9 +305,52 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           confirmText: 'OK',
                         );
                         if (!ok) return;
+
+                        // 呼叫 PATCH API 更新 allowDuplicate
                         setState(() {
-                          _currentBatch = _currentBatch!.copyWith(allowDuplicate: val);
+                          _isLoading = true;
                         });
+
+                        try {
+                          await ApiService.updateBatchPartial(
+                            ruleId: _currentBatch!.id,
+                            allowDuplicate: val,
+                          );
+
+                          if (!mounted) return;
+
+                          // 更新本地狀態
+                          setState(() {
+                            _currentBatch = _currentBatch!.copyWith(allowDuplicate: val);
+                            _isLoading = false;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(val 
+                                  ? '已啟用忽略重複檢查' 
+                                  : '已停用忽略重複檢查'),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+
+                          // 重新載入批次資料以同步後端狀態
+                          await _loadBatchesFromApi();
+                        } catch (e) {
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isLoading = false;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('更新失敗：$e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                       activeColor: const Color(0xFF2B7FFF),
                     ),
@@ -375,35 +459,59 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             confirmText: 'Set Active',
                           );
                           if (!ok) return;
+
+                          // 呼叫 API 設定為 Active
                           setState(() {
-                            // 更新 current 與列表 isActive 標記
-                            _currentBatch = b.copyWith(isActive: true);
-                            for (var i = 0; i < _batches.length; i++) {
-                              final item = _batches[i];
-                              _batches[i] = item.copyWith(isActive: item.id == b.id);
-                            }
+                            _isLoading = true;
                           });
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
+
+                          try {
+                            await ApiService.setBatchActive(ruleId: b.id);
+
+                            if (!mounted) return;
+
+                            // 更新本地狀態
+                            setState(() {
+                              // 更新 current 與列表 isActive 標記
+                              _currentBatch = b.copyWith(isActive: true);
+                              for (var i = 0; i < _batches.length; i++) {
+                                final item = _batches[i];
+                                _batches[i] = item.copyWith(isActive: item.id == b.id);
+                              }
+                              _isLoading = false;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})'),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
+                            // 重新載入批次資料以同步後端狀態
+                            await _loadBatchesFromApi();
+                          } catch (e) {
+                            if (!mounted) return;
+
+                            setState(() {
+                              _isLoading = false;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('設定失敗：$e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFD1D5DC)),
                           foregroundColor: const Color(0xFF101828),
                         ),
                         child: const Text('Set Active'),
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Edit'),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFD1D5DC)),
-                          foregroundColor: const Color(0xFF101828),
-                        ),
-                        child: const Text('Edit'),
                       ),
                     ),
                   ],
@@ -656,7 +764,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     setState(() { _isLoading = true; });
     try {
       await ApiService.updateBatch(
-        id: original.id,
+        ruleId: original.id,
         name: name,
         start: start,
         end: end,
@@ -690,6 +798,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('批次已更新')), 
       );
+
+      // 重新載入批次資料以同步後端狀態
+      await _loadBatchesFromApi();
     } catch (e) {
       if (!mounted) return;
       setState(() { _isLoading = false; });
@@ -800,6 +911,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           backgroundColor: Colors.green,
         ),
       );
+
+      // 重新載入批次資料以同步後端狀態
+      await _loadBatchesFromApi();
     } catch (e) {
       if (!mounted) return;
 
