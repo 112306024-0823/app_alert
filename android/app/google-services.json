@@ -1,0 +1,14 @@
+{
+    "type": "service_account",
+    "project_id": "barcodevalidatorapp",
+    "private_key_id": "3f21957112aed16adaed6c7aa7b7a554c46f52ce",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDaGvvr+f0bla96\nR3VPsKOUevtybbDHY9HBeed4mRh15t9MhVStEJKxFGm8lXjQ81cdDXE3N1QxFyco\nruS3eTTRM1ifpH1XcXLZvrRQDlVks4KfZE4+hdl2qgWpUO0O8rNu7dVeQISNrocg\n16xU2vC9sGC8jN7K9z2pWxi397B3I6HOWkW1/m/WTi63wZJzi00lphtGk8xdqCsH\nVRgrFJq5EzFTyBvPCH3DHwWIuJ1JzpRp6bdZdf3JsrBK+t8xyYym3Za0+uBsmTCR\nEaVvOs8/2l20Vs9ZS34p7hmICPfnRBDxlRXJIco4NzCsu+C0g8c+nhUA25M8s9+G\nY2u+k241AgMBAAECggEAE3C7SrXOHzLQ4MvUw4Uhl378wZ7QVn1puV6VyLSQrxWk\niqwJt6FWCe2hXRtPmQRPm/nSQRMv8G45YdFw9n+ZuxniCNy/BVfJ3mm2pboZV2/+\nsRleNgl1MDQIbCaX8rCkWLtfPNbwWbaYOc+vfyLCuY2qmbPOufWeq+VAR0mPE5dR\nzuFXFtbSTwWFjmSvephRcBU+qsSw5ycZUMR0udN9NmiQSfEoqnEOVvEOtzcg3wvj\n4ZAJ2H/e7ZM1NXhf7Q8np7DKKNMJbZDNClfmPOpt+LJQrKOkDc3tqoIC+rQrjKEK\nNNNAiZPUA4Nm3NL2bLNidCIxbmqXT6RG1AtPteYSQQKBgQD3FdV091j7Zj9sa1Z3\n6V77rpeaobKnwqWHQQDOBNzEQDwLz7ioknu4McCy+FpoeD8Xi2e3D7EsAUTr7Jbz\n4rjP3AT/HpWDBeLmaTCmwgjKHRA3K5bQRg5nhkDG0gCohJmh8BilpPqasEOdp3mi\nS0YyLc7luvbGb2ZA5/IA7UGm4QKBgQDh+XtfYpje6nduF/5sw4xQZUy+esrZzd5P\njNd6aNJcXCUwZ+1qcgGB7M/++prmNkHmYN3tPqv5ZwuLUtEn67viVa8ec7NLoD5Q\n2sXGviuEX9ipe74EDTarYc0eRAnrpmR0DTBjC5LQdgfvp8RkKJuk/rmvm5z72+/K\n/7ocV0c11QKBgBEDxuQ8GDuPqfRsW9L8FhdcyYHTersEs2Nh/Y0yVoWJKtlhX4T0\nOWLQwkVQxuEEzstvRSAdC4VNPRLGAwseZL2jmBB9aaxRHnPhcIE7QWGxqKkz7jm/\naUSFwTYvxe3U28OEBh56AuveEXnsy3p6loXkE6hMPKwjhbYYgti/fdLhAoGBAMMZ\nyjntf70exGSKVMGFB/U1sM/YZqEsDF+0YyotrEnPyNAFOscnjUOmuWIU7n4KpFUK\nlzFJZeOb4yy0IR8NeZcNkXeCP2/w9zyJ1i4kbKAKvJ5/1uvamLPZaeZSqhoJ/Dry\nVC9/g492CJ4SxA4RvWf0AU+r1BrjpiInLoFfnXzNAoGBAN9AcnbqzA7GS3pRFqwO\nr63tstDS95XtvBUMNMfsvf2f01NZticNgmcE94glKS+kCGEszI6lQQmUBpd4+ZBh\nCFf7eXwZ8gL/FazcQVttYoHXnvLSXIlZScSRiwfr0W7j6geFENHdIDbv70vEsJkC\nmvf+sU40jfj3XZNiXsaPsFkv\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk-fbsvc@barcodevalidatorapp.iam.gserviceaccount.com",
+    "client_id": "115576062610291882468",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40barcodevalidatorapp.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
+  

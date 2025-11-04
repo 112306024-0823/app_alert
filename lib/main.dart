@@ -1,10 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'screens/batch_settings_screen.dart';
 import 'screens/used_codes_screen.dart';
 import 'screens/test_scanner_screen.dart';
 import 'models/batch.dart';
+import 'services/fcm_service.dart';
 
-void main() {
+// 背景訊息處理器（必須是頂層函數）
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('收到背景通知: ${message.notification?.title}');
+  debugPrint('通知內容: ${message.notification?.body}');
+  debugPrint('通知資料: ${message.data}');
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 初始化 Firebase
+  try {
+    await Firebase.initializeApp();
+    debugPrint('Firebase 初始化成功');
+    
+    // 設定背景訊息處理器
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    
+    // 初始化 FCM 服務
+    await FcmService.initialize();
+  } catch (e) {
+    debugPrint('Firebase 初始化失敗: $e');
+    // 即使 Firebase 初始化失敗，也繼續運行 App
+  }
+  
   runApp(const MyApp());
 }
 
