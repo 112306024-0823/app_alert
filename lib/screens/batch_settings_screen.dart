@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/batch.dart';
 import '../services/api_service.dart';
 
@@ -17,6 +18,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   final List<Batch> _batches = [];
   Batch? _currentBatch;
   bool _isLoading = false;
+  final Set<int> _batchesWithLogs = {}; // 儲存有 log 的 ruleId 集合
 
   @override
   void initState() {
@@ -32,7 +34,32 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     });
 
     try {
-      final items = await ApiService.getBatchList();
+      // 並行載入批次清單和所有 log
+      final results = await Future.wait([
+        ApiService.getBatchList(),
+        ApiService.getSuccessLogs(), // 不傳 ruleId，取得所有 log
+        ApiService.getAlertLogs(), // 不傳 ruleId，取得所有 log
+      ]);
+
+      final items = results[0];
+      final successLogs = results[1];
+      final alertLogs = results[2];
+
+      // 找出所有有 log 的 ruleId
+      final batchesWithLogs = <int>{};
+      for (var log in successLogs) {
+        final ruleId = log['ruleId'];
+        if (ruleId is int) {
+          batchesWithLogs.add(ruleId);
+        }
+      }
+      for (var log in alertLogs) {
+        final ruleId = log['ruleId'];
+        if (ruleId is int) {
+          batchesWithLogs.add(ruleId);
+        }
+      }
+
       final loaded = items.map((m) {
         
         final startCode = m['startCode']?.toString() ?? '';
@@ -59,6 +86,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         _batches.addAll(loaded.where((b) => !b.isActive));
         // Active 批次設為當前批次
         _currentBatch = activeBatches.isNotEmpty ? activeBatches.first : null;
+        // 更新有 log 的 batch 集合
+        _batchesWithLogs.clear();
+        _batchesWithLogs.addAll(batchesWithLogs);
         _isLoading = false;
       });
     } catch (e) {
@@ -281,13 +311,15 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      if (_currentBatch == null) return;
-                      _showEditBatchDialog(_currentBatch!);
-                    },
-                  ),
+                  // 只有在該 batch 沒有 log 時才顯示編輯按鈕
+                  if (_currentBatch != null && !_hasLogs(_currentBatch!.id))
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        if (_currentBatch == null) return;
+                        _showEditBatchDialog(_currentBatch!);
+                      },
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -522,6 +554,13 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     );
   }
 
+  /// 檢查 batch 是否有 log
+  bool _hasLogs(String batchId) {
+    final ruleId = int.tryParse(batchId);
+    if (ruleId == null) return false;
+    return _batchesWithLogs.contains(ruleId);
+  }
+
   /// 建立新批次對話框
   void _showCreateBatchDialog() {
     final nameController = TextEditingController();
@@ -574,18 +613,16 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       hint: 'LCA1210',
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: startController,
+                    _buildCodeInputField(
                       label: 'Start Number',
-                      hint: '500',
-                      keyboardType: TextInputType.number,
+                      onChanged: (value) => startController.text = value,
+                      initialValue: '',
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: endController,
+                    _buildCodeInputField(
                       label: 'End Number',
-                      hint: '8000',
-                      keyboardType: TextInputType.number,
+                      onChanged: (value) => endController.text = value,
+                      initialValue: '',
                     ),
                   ],
                 ),
@@ -684,18 +721,16 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       hint: batch.name,
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: startController,
+                    _buildCodeInputField(
                       label: 'Start Number',
-                      hint: batch.startNumber.toString(),
-                      keyboardType: TextInputType.number,
+                      onChanged: (value) => startController.text = value,
+                      initialValue: batch.startNumber.toString().padLeft(5, '0'),
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: endController,
+                    _buildCodeInputField(
                       label: 'End Number',
-                      hint: batch.endNumber.toString(),
-                      keyboardType: TextInputType.number,
+                      onChanged: (value) => endController.text = value,
+                      initialValue: batch.endNumber.toString().padLeft(5, '0'),
                     ),
                   ],
                 ),
@@ -758,6 +793,31 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       _showErrorMessage('請填寫所有欄位');
       return;
     }
+    
+    // 驗證 Start Number 和 End Number 必須是 5 碼數字
+    if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
+      _showErrorMessage('Start Number 必須是 5 碼數字');
+      return;
+    }
+    
+    if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
+      _showErrorMessage('End Number 必須是 5 碼數字');
+      return;
+    }
+    
+    // 驗證區間規則：End Number 必須大於 Start Number
+    final startNum = int.tryParse(start);
+    final endNum = int.tryParse(end);
+    
+    if (startNum == null || endNum == null) {
+      _showErrorMessage('數字格式錯誤');
+      return;
+    }
+    
+    if (endNum <= startNum) {
+      _showErrorMessage('End Number 必須大於 Start Number');
+      return;
+    }
 
     setState(() { _isLoading = true; });
     try {
@@ -784,12 +844,27 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     }
   }
 
+  /// 驗證碼風格的數字輸入欄位（5 個格子）
+  Widget _buildCodeInputField({
+    required String label,
+    required void Function(String value) onChanged,
+    String initialValue = '',
+  }) {
+    return _CodeInputField(
+      label: label,
+      onChanged: onChanged,
+      initialValue: initialValue,
+    );
+  }
+
   /// 輸入欄位
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,6 +880,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
@@ -846,6 +923,31 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       _showErrorMessage('請填寫所有欄位');
       return;
     }
+    
+    // 驗證 Start Number 和 End Number 必須是 5 碼數字
+    if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
+      _showErrorMessage('Start Number 必須是 5 碼數字');
+      return;
+    }
+    
+    if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
+      _showErrorMessage('End Number 必須是 5 碼數字');
+      return;
+    }
+    
+    // 驗證區間規則：End Number 必須大於 Start Number
+    final startNum = int.tryParse(start);
+    final endNum = int.tryParse(end);
+    
+    if (startNum == null || endNum == null) {
+      _showErrorMessage('數字格式錯誤');
+      return;
+    }
+    
+    if (endNum <= startNum) {
+      _showErrorMessage('End Number 必須大於 Start Number');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -874,5 +976,162 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
       _showErrorMessage('建立批次失敗：$e');
     }
+  }
+}
+
+/// 驗證碼風格的數字輸入欄位（5 個格子）
+class _CodeInputField extends StatefulWidget {
+  final String label;
+  final void Function(String value) onChanged;
+  final String initialValue;
+
+  const _CodeInputField({
+    required this.label,
+    required this.onChanged,
+    this.initialValue = '',
+  });
+
+  @override
+  State<_CodeInputField> createState() => _CodeInputFieldState();
+}
+
+class _CodeInputFieldState extends State<_CodeInputField> {
+  late List<TextEditingController> controllers;
+  late List<FocusNode> focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    // 創建 5 個 TextEditingController
+    controllers = List.generate(5, (index) {
+      final controller = TextEditingController();
+      if (widget.initialValue.length > index) {
+        controller.text = widget.initialValue[index];
+      }
+      return controller;
+    });
+
+    // 創建 5 個 FocusNode
+    focusNodes = List.generate(5, (index) => FocusNode());
+  }
+
+  @override
+  void dispose() {
+    // 釋放資源
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    for (var focusNode in focusNodes) {
+      focusNode.dispose();
+    }
+    super.dispose();
+  }
+
+  // 更新完整值的函數
+  void updateValue() {
+    final value = controllers.map((c) => c.text).join();
+    widget.onChanged(value);
+  }
+
+  // 處理輸入，自動跳轉到下一個輸入框
+  void handleInput(int index, String value) {
+    if (value.isNotEmpty) {
+      // 只保留最後一個輸入的字元（處理複製貼上的情況）
+      final lastChar = value[value.length - 1];
+      if (RegExp(r'^\d$').hasMatch(lastChar)) {
+        controllers[index].text = lastChar;
+        updateValue();
+        
+        // 使用 SchedulerBinding 確保在下一幀更新焦點
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // 跳轉到下一個輸入框
+          if (index < 4) {
+            focusNodes[index + 1].requestFocus();
+          } else {
+            // 最後一個輸入框，收起鍵盤
+            focusNodes[index].unfocus();
+          }
+        });
+      } else {
+        // 如果不是數字，清空輸入框
+        controllers[index].text = '';
+        updateValue();
+      }
+    } else if (value.isEmpty) {
+      // 刪除時跳轉到上一個輸入框
+      controllers[index].text = '';
+      updateValue();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (index > 0) {
+          focusNodes[index - 1].requestFocus();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF101828),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(5, (index) {
+            return SizedBox(
+              width: 50,
+              height: 50,
+              child: TextField(
+                controller: controllers[index],
+                focusNode: focusNodes[index],
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                maxLength: 1,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  counterText: '',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF2B7FFF), width: 2),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: (value) => handleInput(index, value),
+                onTap: () {
+                  // 點擊時自動選中所有文字，方便刪除
+                  controllers[index].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: controllers[index].text.length,
+                  );
+                },
+              ),
+            );
+          }),
+        ),
+      ],
+    );
   }
 }
