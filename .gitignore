@@ -43,3 +43,46 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android related (鋆?)
+/android/.gradle/
+/android/app/build/
+/android/local.properties
+/android/captures/
+/android/.idea/
+*.apk
+*.ap_
+*.aab
+
+# iOS related (鋆?)
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/ephemeral/
+/ios/Runner/GeneratedPluginRegistrant.*
+xcuserdata/
+*.ipa
+*.xcuserstate
+
+# macOS related (鋆?)
+/macos/Flutter/ephemeral/
+/macos/.symlinks/
+
+# Windows related (鋆?)
+/windows/flutter/ephemeral/
+
+# Linux related (鋆?)
+/linux/flutter/ephemeral/
+
+# Environment variables
+.env
+.env.local
+
+# IDE related (鋆?)
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Flutter plugins (鋆?)
+.flutter-plugins
+.packages
+

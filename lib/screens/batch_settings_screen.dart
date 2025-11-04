@@ -34,15 +34,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     try {
       final items = await ApiService.getBatchList();
       final loaded = items.map((m) {
-        // API 回傳的 startCode/endCode 可能是字串（如 "A001"）或數字
-        // 先嘗試轉換為數字，失敗則使用字串的 hash code 作為臨時值
+        
         final startCode = m['startCode']?.toString() ?? '';
         final endCode = m['endCode']?.toString() ?? '';
         final startNum = int.tryParse(startCode) ?? startCode.hashCode;
         final endNum = int.tryParse(endCode) ?? endCode.hashCode;
 
         return Batch(
-          id: m['ruleId']?.toString() ?? '', // API 使用 ruleId 而非 id
+          id: m['ruleId']?.toString() ?? '', 
           name: m['batchName']?.toString() ?? '',
           startNumber: startNum,
           endNumber: endNum,
@@ -69,16 +68,12 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         _isLoading = false;
       });
 
-      // API 失敗時顯示錯誤訊息，不使用假資料
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('載入批次失敗：$e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      // API 失敗時
+      _showErrorMessage('載入批次失敗：$e');
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +184,29 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       ),
     );
     return result ?? false;
+  }
+
+  /// 顯示成功訊息
+  void _showSuccessMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 顯示錯誤訊息
+  void _showErrorMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   /// 當前批次區塊
@@ -325,15 +343,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             _isLoading = false;
                           });
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(val 
-                                  ? '已啟用忽略重複檢查' 
-                                  : '已停用忽略重複檢查'),
-                              backgroundColor: Colors.green,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
+                          _showSuccessMessage(val 
+                              ? 'Enable ignore duplicate' 
+                              : 'Disable ignore duplicate');
 
                           // 重新載入批次資料以同步後端狀態
                           await _loadBatchesFromApi();
@@ -431,7 +443,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
-                              'No-dup',
+                              'ignore-dup-check',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF856404),
@@ -481,14 +493,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _isLoading = false;
                             });
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})'),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 2),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                            _showSuccessMessage('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})');
 
                             // 重新載入批次資料以同步後端狀態
                             await _loadBatchesFromApi();
@@ -499,12 +504,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _isLoading = false;
                             });
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('設定失敗：$e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+                            _showErrorMessage('設定失敗：$e');
                           }
                         },
                         style: OutlinedButton.styleFrom(
@@ -755,9 +755,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     String end,
   ) async {
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請填寫所有欄位')),
-      );
+      _showErrorMessage('請填寫所有欄位');
       return;
     }
 
@@ -773,40 +771,16 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       );
 
       if (!mounted) return;
-      setState(() {
-        // 更新 _currentBatch 或列表中的資料
-        if (_currentBatch != null && _currentBatch!.id == original.id) {
-          _currentBatch = _currentBatch!.copyWith(
-            name: name,
-            startNumber: int.tryParse(start) ?? original.startNumber,
-            endNumber: int.tryParse(end) ?? original.endNumber,
-          );
-        }
-        for (var i = 0; i < _batches.length; i++) {
-          if (_batches[i].id == original.id) {
-            _batches[i] = _batches[i].copyWith(
-              name: name,
-              startNumber: int.tryParse(start) ?? original.startNumber,
-              endNumber: int.tryParse(end) ?? original.endNumber,
-            );
-          }
-        }
-        _isLoading = false;
-      });
-
+      
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('批次已更新')), 
-      );
-
+      _showSuccessMessage('批次已更新');
+      
       // 重新載入批次資料以同步後端狀態
       await _loadBatchesFromApi();
     } catch (e) {
       if (!mounted) return;
       setState(() { _isLoading = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('更新失敗：$e')),
-      );
+      _showErrorMessage('更新失敗：$e');
     }
   }
 
@@ -869,9 +843,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     String end,
   ) async {
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請填寫所有欄位')),
-      );
+      _showErrorMessage('請填寫所有欄位');
       return;
     }
 
@@ -880,37 +852,16 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     });
 
     try {
-      final response = await ApiService.createBatch(
+      await ApiService.createBatch(
         name: name,
         start: start,
         end: end,
       );
 
-      final newBatch = Batch(
-        id: response['id']?.toString() ?? 
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        startNumber: int.tryParse(start) ?? 0,
-        endNumber: int.tryParse(end) ?? 0,
-        isActive: true,
-      );
-
       if (!mounted) return;
 
-      setState(() {
-        _batches.add(newBatch);
-        _currentBatch = newBatch;
-        _isLoading = false;
-      });
-
       Navigator.of(context).pop();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('批次建立成功！'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showSuccessMessage('批次建立成功！');
 
       // 重新載入批次資料以同步後端狀態
       await _loadBatchesFromApi();
@@ -921,12 +872,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('建立批次失敗：$e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorMessage('建立批次失敗：$e');
     }
   }
 }

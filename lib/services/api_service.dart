@@ -12,14 +12,6 @@ class ApiService {
   static Duration get timeout => Duration(seconds: ApiConfig.timeoutSeconds);
   
   /// 建立新批次
-  /// 
-  /// 參數：
-  /// - name: 批次名稱（例如 "2025-10A"）
-  /// - start: 開始編號（例如 "1000"）
-  /// - end: 結束編號（例如 "1999"）
-  /// 
-  /// 回傳：API 回應的 JSON 資料
-  /// 
   /// API: POST /api/batch/create
   static Future<Map<String, dynamic>> createBatch({
     required String name,
@@ -53,12 +45,6 @@ class ApiService {
   }
   
   /// 階段一：註冊裝置（取得 FCM Token 並註冊）
-  /// 
-  /// 參數：
-  /// - token: FCM Token（例如 "c3po...R2D2"）
-  /// 
-  /// API: POST /api/Batch/register
-  /// Body: { "fcmToken": "c3po...R2D2" }
   static Future<Map<String, dynamic>> registerDevice({
     required String token,
   }) async {
@@ -87,14 +73,6 @@ class ApiService {
   }
 
   /// 掃描代碼（測試掃描器）
-  /// 
-  /// 參數：
-  /// - code: 掃描的代碼（例如 "1234"）
-  /// 
-  /// 回傳：API 回應的 JSON 資料，包含驗證結果
-  /// 
-  /// API: POST /api/scan/validate
-  /// Body: { "code": "1234" }
   static Future<Map<String, dynamic>> scanCode({
     required String code,
   }) async {
@@ -123,14 +101,7 @@ class ApiService {
   }
 
   /// 階段四：取得警示紀錄（錯誤紀錄）
-  /// 
-  /// API: GET /api//alerts
-  /// 
-  /// Response Format:
-  /// {
-  ///   "count": 2,
-  ///   "logs": [...]
-  /// }
+
   static Future<List<Map<String, dynamic>>> getAlertLogs() async {
     try {
       final url = Uri.parse('$baseUrl/api/Batch/alerts');
@@ -191,21 +162,8 @@ class ApiService {
   }
 
   /// 取得批次清單
-  ///
   /// API: GET /api/Batch/list
-  ///
-  /// Response Format:
-  /// [
-  ///   {
-  ///     "ruleId": 2,
-  ///     "batchName": "testCase1",
-  ///     "startCode": "A001",
-  ///     "endCode": "A100",
-  ///     "isActive": true,
-  ///     "allowDuplicate": true,
-  ///     "createdAt": "2025-11-03T15:53:33.3079086"
-  ///   }
-  /// ]
+ 
   static Future<List<Map<String, dynamic>>> getBatchList() async {
     try {
       final url = Uri.parse('$baseUrl/api/Batch/list');
@@ -273,16 +231,8 @@ class ApiService {
     }
   }
 
-  /// 部分更新批次資訊（僅更新指定欄位）
-  ///
   /// API: PATCH /api/Batch/update-partial/{ruleId}
-  ///
-  /// 參數說明：
-  /// - ruleId: 批次 ID（放在 URL path 中）
-  /// - allowDuplicate: 是否忽略重複檢查（選填）
-  /// - isActive: 是否為當前批次（選填）
-  ///
-  /// 用途：用於更新單一欄位，如切換 allowDuplicate 開關
+  /// 用途：更新單一欄位，如切換 allowDuplicate 開關
   static Future<Map<String, dynamic>> updateBatchPartial({
     required String ruleId,
     bool? allowDuplicate,
@@ -314,12 +264,6 @@ class ApiService {
   }
 
   /// 設定批次為 Active
-  ///
-  /// API: POST /api/Batch/set-active
-  ///
-  /// 參數說明：
-  /// - ruleId: 批次 ID（放在 body 中）
-  ///
   /// 用途：設定指定批次為當前 Active 批次，後端會自動將其他批次設為非 Active
   static Future<Map<String, dynamic>> setBatchActive({
     required String ruleId,
