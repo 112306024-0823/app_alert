@@ -22,6 +22,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
   List<CodeRecord> _codes = [];
   List<AlertRecord> _alerts = [];
   bool _isLoading = false;
+  bool? _allowDuplicate; // 從 API 取得的 allowDuplicate 狀態
 
   @override
   void initState() {
@@ -36,18 +37,58 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     });
 
     try {
-      // 並行載入成功和錯誤紀錄
+      // 將 batch.id 轉換為 int（ruleId）
+      final ruleId = int.tryParse(widget.currentBatch.id);
+      
+      // 並行載入批次資訊、成功紀錄和錯誤紀錄
       final results = await Future.wait([
-        ApiService.getSuccessLogs(),
-        ApiService.getAlertLogs(),
+        ApiService.getBatchList(), // 取得批次清單以確認 allowDuplicate 狀態
+        ApiService.getSuccessLogs(ruleId: ruleId),
+        ApiService.getAlertLogs(ruleId: ruleId),
       ]);
 
-      final successLogs = results[0];
-      final alertLogs = results[1];
+      final batchList = results[0];
+      final successLogs = results[1];
+      final alertLogs = results[2];
+      
+      // 從批次清單中找到對應的 batch（根據 ruleId，ruleId 是 int 類型）
+      bool allowDuplicate = false;
+      if (ruleId != null) {
+        try {
+          final batchData = batchList.firstWhere(
+            (batch) {
+              final batchRuleId = batch['ruleId'];
+              return batchRuleId is int && batchRuleId == ruleId;
+            },
+          );
+          allowDuplicate = batchData['allowDuplicate'] == true;
+        } catch (e) {
+          // 如果找不到對應的 batch，使用預設值 false
+          allowDuplicate = false;
+        }
+      }
 
       setState(() {
+        // 更新 allowDuplicate 狀態
+        _allowDuplicate = allowDuplicate;
+        
+        // 根據 ruleId 過濾 log（ruleId 是 int 類型）
+        final filteredSuccessLogs = ruleId != null
+            ? successLogs.where((log) {
+                final logRuleId = log['ruleId'];
+                return logRuleId is int && logRuleId == ruleId;
+              }).toList()
+            : successLogs;
+        
+        final filteredAlertLogs = ruleId != null
+            ? alertLogs.where((log) {
+                final logRuleId = log['ruleId'];
+                return logRuleId is int && logRuleId == ruleId;
+              }).toList()
+            : alertLogs;
+        
         // 轉換為 CodeRecord
-        _codes = successLogs.map((log) {
+        _codes = filteredSuccessLogs.map((log) {
           return CodeRecord(
             code: log['scannedCode']?.toString() ?? '',
             status: log['status']?.toString() ?? '',
@@ -56,7 +97,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
         }).toList();
 
         // 轉換為 AlertRecord
-        _alerts = alertLogs.map((log) {
+        _alerts = filteredAlertLogs.map((log) {
           return AlertRecord(
             code: log['scannedCode']?.toString() ?? '',
             alertType: log['status']?.toString() ?? '',
@@ -131,21 +172,34 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
               const SizedBox(height: 24),
               
-              
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3CD),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Text(
-              'Duplicate check disabled for current batch',
-              style: TextStyle(fontSize: 13, color: Color(0xFF856404)),
-            ),
-          ),
-              const SizedBox(height: 24),
+              // Ignore duplicate check 提醒（根據 API 取得的 allowDuplicate 狀態顯示）
+              if (_allowDuplicate == true)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.warning_amber, color: Color(0xFF856404), size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Duplicate check disabled for current batch',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF856404),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_allowDuplicate == true)
+                const SizedBox(height: 24),
               
               // 搜尋框和刷新按鈕
               Row(
@@ -193,35 +247,6 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     );
   }
 
-  /// 當前批次卡片
-  Widget _buildCurrentBatchCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              widget.currentBatch.displayName,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Color(0xFF101828),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(
-            Icons.chevron_right,
-            size: 20,
-            color: Color(0xFF101828),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// 搜尋框
   Widget _buildSearchBar() {

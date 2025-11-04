@@ -101,10 +101,17 @@ class ApiService {
   }
 
   /// 階段四：取得警示紀錄（錯誤紀錄）
-
-  static Future<List<Map<String, dynamic>>> getAlertLogs() async {
+  /// [ruleId] 批次規則 ID，用於過濾特定批次的 log
+  static Future<List<Map<String, dynamic>>> getAlertLogs({
+    int? ruleId,
+  }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/Batch/alerts');
+      final uri = Uri.parse('$baseUrl/api/Batch/alerts');
+      
+      // 如果有 ruleId，加入 query parameter
+      final url = ruleId != null
+          ? uri.replace(queryParameters: {'ruleId': ruleId.toString()})
+          : uri;
       
       final response = await http.get(url).timeout(timeout);
 
@@ -125,10 +132,18 @@ class ApiService {
     }
   }
 
-
-  static Future<List<Map<String, dynamic>>> getSuccessLogs() async {
+  /// 階段四：取得成功紀錄
+  /// [ruleId] 批次規則 ID，用於過濾特定批次的 log
+  static Future<List<Map<String, dynamic>>> getSuccessLogs({
+    int? ruleId,
+  }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/Batch/success');
+      final uri = Uri.parse('$baseUrl/api/Batch/success');
+      
+      // 如果有 ruleId，加入 query parameter
+      final url = ruleId != null
+          ? uri.replace(queryParameters: {'ruleId': ruleId.toString()})
+          : uri;
       
       final response = await http.get(url).timeout(timeout);
 
@@ -139,7 +154,6 @@ class ApiService {
         if (data is Map && data.containsKey('logs')) {
           return List<Map<String, dynamic>>.from(data['logs']);
         }
-      
         
         return [];
       } else {
