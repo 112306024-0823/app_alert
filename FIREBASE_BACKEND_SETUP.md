@@ -4,12 +4,7 @@
 
 此文件說明如何在 C# 後端使用 Firebase 服務帳戶憑證發送推送通知給 Flutter 應用程式。
 
-## 🔑 服務帳戶憑證
 
-您提供的服務帳戶憑證資訊：
-- **專案 ID**：`barcodevalidatorapp`
-- **服務帳戶 Email**：`firebase-adminsdk-fbsvc@barcodevalidatorapp.iam.gserviceaccount.com`
-- **憑證 ID**：`3f21957112aed16adaed6c7aa7b7a554c46f52ce`
 
 ## 🔧 後端設定步驟
 
