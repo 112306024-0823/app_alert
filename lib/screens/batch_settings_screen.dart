@@ -19,6 +19,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   Batch? _currentBatch;
   bool _isLoading = false;
   final Set<int> _batchesWithLogs = {}; // 儲存有 log 的 ruleId 集合
+  final Map<int, int> _batchPrintCounts = {}; // 儲存每個 batch 的已列印數量 (ruleId -> count)
 
   @override
   void initState() {
@@ -45,14 +46,20 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       final successLogs = results[1];
       final alertLogs = results[2];
 
-      // 找出所有有 log 的 ruleId
+      // 找出所有有 log 的 ruleId 並計算每個 batch 的已列印數量
       final batchesWithLogs = <int>{};
+      final batchPrintCounts = <int, int>{};
+      
+      // 計算每個 batch 的已列印數量（從 successLogs）
       for (var log in successLogs) {
         final ruleId = log['ruleId'];
         if (ruleId is int) {
           batchesWithLogs.add(ruleId);
+          batchPrintCounts[ruleId] = (batchPrintCounts[ruleId] ?? 0) + 1;
         }
       }
+      
+      // 記錄有 alert log 的 batch（但不計算數量）
       for (var log in alertLogs) {
         final ruleId = log['ruleId'];
         if (ruleId is int) {
@@ -89,6 +96,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         // 更新有 log 的 batch 集合
         _batchesWithLogs.clear();
         _batchesWithLogs.addAll(batchesWithLogs);
+        // 更新每個 batch 的已列印數量
+        _batchPrintCounts.clear();
+        _batchPrintCounts.addAll(batchPrintCounts);
         _isLoading = false;
       });
     } catch (e) {
@@ -309,6 +319,15 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           color: Colors.grey,
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Printed：${_getPrintCount(_currentBatch!.id)}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6A7282),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                   // 只有在該 batch 沒有 log 時才顯示編輯按鈕
@@ -492,6 +511,15 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         color: Color(0xFF6A7282),
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Printed：${_getPrintCount(b.id)}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6A7282),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -559,6 +587,13 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final ruleId = int.tryParse(batchId);
     if (ruleId == null) return false;
     return _batchesWithLogs.contains(ruleId);
+  }
+
+  /// 取得 batch 的已列印數量
+  int _getPrintCount(String batchId) {
+    final ruleId = int.tryParse(batchId);
+    if (ruleId == null) return 0;
+    return _batchPrintCounts[ruleId] ?? 0;
   }
 
   /// 建立新批次對話框
@@ -1071,67 +1106,81 @@ class _CodeInputFieldState extends State<_CodeInputField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.label,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF101828),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(5, (index) {
-            return SizedBox(
-              width: 50,
-              height: 50,
-              child: TextField(
-                controller: controllers[index],
-                focusNode: focusNodes[index],
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                maxLength: 1,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                decoration: InputDecoration(
-                  counterText: '',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFF2B7FFF), width: 2),
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (value) => handleInput(index, value),
-                onTap: () {
-                  // 點擊時自動選中所有文字，方便刪除
-                  controllers[index].selection = TextSelection(
-                    baseOffset: 0,
-                    extentOffset: controllers[index].text.length,
-                  );
-                },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 計算每個方格的大小（考慮間距）
+        // 可用寬度減去 Row 的間距（4 個間距，每個約 8px）
+        final availableWidth = constraints.maxWidth;
+        final spacing = 8.0 * 4; // 5 個方格之間有 4 個間距
+        final cellSize = ((availableWidth - spacing) / 5).clamp(40.0, 60.0);
+        // 字體大小根據方格大小調整
+        final fontSize = (cellSize * 0.4).clamp(16.0, 24.0);
+        // 圓角半徑根據方格大小調整
+        final borderRadius = (cellSize * 0.2).clamp(8.0, 12.0);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.label,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF101828),
               ),
-            );
-          }),
-        ),
-      ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(5, (index) {
+                return SizedBox(
+                  width: cellSize,
+                  height: cellSize,
+                  child: TextField(
+                    controller: controllers[index],
+                    focusNode: focusNodes[index],
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 1,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      counterText: '',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        borderSide: const BorderSide(color: Color(0xFF2B7FFF), width: 2),
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (value) => handleInput(index, value),
+                    onTap: () {
+                      // 點擊時自動選中所有文字，方便刪除
+                      controllers[index].selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: controllers[index].text.length,
+                      );
+                    },
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
     );
   }
 }

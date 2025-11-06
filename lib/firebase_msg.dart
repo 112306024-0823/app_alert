@@ -73,7 +73,7 @@ class FirebaseMsg {
           // 觸發 UsedCodesScreen 自動刷新
           UsedCodesRefreshManager.triggerRefresh();
         }
-ㄕ      });
+      });
     } catch (e) {
       debugPrint('FCM 初始化錯誤: $e');
       rethrow;
