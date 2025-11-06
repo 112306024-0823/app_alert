@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'App Alert - Batch Management',
+      title: 'Barcode Validator',
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey, // 設置全局導航鍵
       theme: ThemeData(

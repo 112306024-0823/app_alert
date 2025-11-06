@@ -15,6 +15,28 @@ class UsedCodesScreen extends StatefulWidget {
   State<UsedCodesScreen> createState() => _UsedCodesScreenState();
 }
 
+/// 全局刷新回呼管理器
+class UsedCodesRefreshManager {
+  static final List<VoidCallback> _refreshCallbacks = [];
+
+  /// 註冊刷新回呼
+  static void register(VoidCallback callback) {
+    _refreshCallbacks.add(callback);
+  }
+
+  /// 移除刷新回呼
+  static void unregister(VoidCallback callback) {
+    _refreshCallbacks.remove(callback);
+  }
+
+  /// 觸發所有註冊的畫面刷新
+  static void triggerRefresh() {
+    for (var callback in _refreshCallbacks) {
+      callback();
+    }
+  }
+}
+
 class _UsedCodesScreenState extends State<UsedCodesScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<CodeRecord> _codes = [];
@@ -22,18 +44,53 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
   bool _isLoading = false;
   bool? _allowDuplicate; // 從 API 取得的 allowDuplicate 狀態
   Batch? _currentBatch; // 當前 active 批次
+  String _searchQuery = ''; // 搜尋關鍵字
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    // 監聽搜尋框輸入
+    _searchController.addListener(_onSearchChanged);
+    // 註冊刷新回呼（用於 FCM 通知觸發更新）
+    UsedCodesRefreshManager.register(_loadData);
+  }
+
+  /// 搜尋框內容變更時觸發
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.trim().toLowerCase();
+    });
+  }
+
+  /// 根據搜尋關鍵字過濾代碼列表
+  List<CodeRecord> get _filteredCodes {
+    if (_searchQuery.isEmpty) {
+      return _codes;
+    }
+    return _codes.where((code) {
+      return code.code.toLowerCase().contains(_searchQuery);
+    }).toList();
+  }
+
+  /// 根據搜尋關鍵字過濾警告列表
+  List<AlertRecord> get _filteredAlerts {
+    if (_searchQuery.isEmpty) {
+      return _alerts;
+    }
+    return _alerts.where((alert) {
+      return alert.code.toLowerCase().contains(_searchQuery);
+    }).toList();
   }
 
   /// 載入資料（階段四：App 查詢紀錄）
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
+  /// [silent] 是否靜默載入（不顯示載入動畫）
+  Future<void> _loadData({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       // 並行載入批次資訊、成功紀錄和錯誤紀錄
@@ -119,12 +176,21 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           );
         }).toList();
 
-        _isLoading = false;
+        if (!silent) {
+          setState(() {
+            _isLoading = false;
+          });
+        } else {
+          // 靜默刷新時也要更新狀態，但不顯示載入動畫
+          setState(() {});
+        }
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -294,19 +360,31 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       ),
       child: TextField(
         controller: _searchController,
-        decoration: const InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(
+        decoration: InputDecoration(
+          hintText: 'Search by code...',
+          hintStyle: const TextStyle(
             fontSize: 14,
             color: Color(0xFF717182),
           ),
-          prefixIcon: Icon(
+          prefixIcon: const Icon(
             Icons.search,
             size: 16,
             color: Color(0xFF717182),
           ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear,
+                    size: 18,
+                    color: Color(0xFF717182),
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                  },
+                )
+              : null,
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ),
     );
@@ -330,7 +408,9 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
             ),
             Text(
-              '列印數：${_codes.length}',
+              _searchQuery.isEmpty
+                  ? '列印數：${_codes.length}'
+                  : '列印數：${_filteredCodes.length} / ${_codes.length}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF4A5565),
@@ -339,14 +419,31 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildTableHeader(['Code', 'Status', 'Time']),
-        const SizedBox(height: 12),
-        ..._codes.map((code) => _buildTableRow(
-          code: code.code,
-          status: code.status,
-          time: code.timestamp,
-          isAlert: false,
-        )),
+        _filteredCodes.isEmpty && _searchQuery.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text(
+                    '找不到符合 "$_searchQuery" 的代碼',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6A7282),
+                    ),
+                  ),
+                ),
+              )
+            : Column(
+                children: [
+                  _buildTableHeader(['Code', 'Status', 'Time']),
+                  const SizedBox(height: 12),
+                  ..._filteredCodes.map((code) => _buildTableRow(
+                        code: code.code,
+                        status: code.status,
+                        time: code.timestamp,
+                        isAlert: false,
+                      )),
+                ],
+              ),
       ],
     );
   }
@@ -368,7 +465,9 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
             ),
             Text(
-              '警告次數：${_alerts.length}',
+              _searchQuery.isEmpty
+                  ? '警告次數：${_alerts.length}'
+                  : '警告次數：${_filteredAlerts.length} / ${_alerts.length}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF4A5565),
@@ -377,14 +476,31 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _buildTableHeader(['Code', 'Alert', 'Time']),
-        const SizedBox(height: 12),
-        ..._alerts.map((alert) => _buildTableRow(
-          code: alert.code,
-          status: alert.alertType,
-          time: alert.timestamp,
-          isAlert: true,
-        )),
+        _filteredAlerts.isEmpty && _searchQuery.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text(
+                    '找不到符合 "$_searchQuery" 的警告記錄',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6A7282),
+                    ),
+                  ),
+                ),
+              )
+            : Column(
+                children: [
+                  _buildTableHeader(['Code', 'Alert', 'Time']),
+                  const SizedBox(height: 12),
+                  ..._filteredAlerts.map((alert) => _buildTableRow(
+                        code: alert.code,
+                        status: alert.alertType,
+                        time: alert.timestamp,
+                        isAlert: true,
+                      )),
+                ],
+              ),
       ],
     );
   }
@@ -554,6 +670,8 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
 
   @override
   void dispose() {
+    UsedCodesRefreshManager.unregister(_loadData);
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }

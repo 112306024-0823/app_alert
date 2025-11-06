@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import '../services/api_service.dart';
+import '../screens/used_codes_screen.dart';
 
 // 背景訊息處理器（必須是頂層函數）
 @pragma('vm:entry-point')
@@ -64,7 +65,15 @@ class FirebaseMsg {
         debugPrint('收到前景通知: ${message.notification?.title}');
         debugPrint('通知內容: ${message.notification?.body}');
         debugPrint('通知資料: ${message.data}');
-      });
+        
+        // 當收到掃描相關通知時，觸發 UsedCodesScreen 刷新
+        final result = message.data['result'];
+        final type = message.data['type'];
+        if (result != null || type != null) {
+          // 觸發 UsedCodesScreen 自動刷新
+          UsedCodesRefreshManager.triggerRefresh();
+        }
+ㄕ      });
     } catch (e) {
       debugPrint('FCM 初始化錯誤: $e');
       rethrow;
