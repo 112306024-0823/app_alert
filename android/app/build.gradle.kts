@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.flutter_application"
+        applicationId = "app.alert"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -42,4 +42,17 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    
+    // Firebase Analytics (可選，如果不需要可以移除)
+    implementation("com.google.firebase:firebase-analytics")
+    
+    // 如果需要使用其他 Firebase 產品，可以在此添加
+    // implementation("com.google.firebase:firebase-messaging")
+    // implementation("com.google.firebase:firebase-crashlytics")
+    // 更多資訊：https://firebase.google.com/docs/android/setup#available-libraries
 }
