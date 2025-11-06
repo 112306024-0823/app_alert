@@ -256,84 +256,74 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Current Batch',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            
-          ],
+        const Text(
+          'Current Batch',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF2B7FFF), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2B7FFF).withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 標題列：名稱和狀態標籤
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             _currentBatch!.name,
                             style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF101828),
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: Color(0xFF2B7FFF),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2B7FFF),
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          const SizedBox(width: 6),
-                          const Text(
+                          child: const Text(
                             'Active',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF2B7FFF),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Printed：${_getPrintCount(_currentBatch!.id)}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6A7282),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  // 只有在該 batch 沒有 log 時才顯示編輯按鈕
+                  // 編輯按鈕
                   if (_currentBatch != null && !_hasLogs(_currentBatch!.id))
                     IconButton(
-                      icon: const Icon(Icons.edit),
+                      icon: const Icon(Icons.edit_outlined, size: 24),
+                      color: const Color(0xFF6A7282),
                       onPressed: () {
                         if (_currentBatch == null) return;
                         _showEditBatchDialog(_currentBatch!);
@@ -341,22 +331,46 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
-              // Ignore duplicate check - simple switch row
+              const SizedBox(height: 12),
+              
+              // 資訊卡片：範圍和已列印數量
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _buildInfoItem(
+                      label: 'Range',
+                      value: '${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: _buildInfoItem(
+                      label: 'Printed',
+                      value: '${_getPrintCount(_currentBatch!.id)}',
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // 重複檢查開關
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     const Expanded(
                       child: Text(
-                        'Ignore duplicate check',
+                        'Allow Duplicate',
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: Color(0xFF101828),
                         ),
                       ),
@@ -367,15 +381,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         if (_currentBatch == null) return;
                         final enabling = val == true;
                         final ok = await _showConfirm(
-                          title: enabling ? 'Enable ignore duplicate' : 'Disable ignore duplicate',
+                          title: enabling ? 'Enable Allow Duplicate' : 'Disable Allow Duplicate',
                           message: enabling
-                              ? 'This will skip duplicate validation for the current batch.'
+                              ? 'This will allow duplicate codes for the current batch.'
                               : 'This will enable duplicate validation for the current batch.',
                           confirmText: 'OK',
                         );
                         if (!ok) return;
 
-                        // 呼叫 PATCH API 更新 allowDuplicate
                         setState(() {
                           _isLoading = true;
                         });
@@ -388,17 +401,15 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
                           if (!mounted) return;
 
-                          // 更新本地狀態
                           setState(() {
                             _currentBatch = _currentBatch!.copyWith(allowDuplicate: val);
                             _isLoading = false;
                           });
 
                           _showSuccessMessage(val 
-                              ? 'Enable ignore duplicate' 
-                              : 'Disable ignore duplicate');
+                              ? 'Allow Duplicate Enabled' 
+                              : 'Allow Duplicate Disabled');
 
-                          // 重新載入批次資料以同步後端狀態
                           await _loadBatchesFromApi();
                         } catch (e) {
                           if (!mounted) return;
@@ -420,30 +431,76 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // 透過上層回呼切換到 Used Codes 分頁（index=1）
-                        widget.onSwitchTab?.call(1, _currentBatch);
-                      },
-                      icon: const Icon(Icons.visibility),
-                      label: const Text('View Record'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2B7FFF),
-                        foregroundColor: Colors.white,
-                      ),
+              
+              const SizedBox(height: 10),
+              
+              // 查看記錄按鈕
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    widget.onSwitchTab?.call(1, _currentBatch);
+                  },
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('View Records'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2B7FFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
+                ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  /// 建立資訊項目（用於顯示範圍和已列印數量）
+  Widget _buildInfoItem({
+    IconData? icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: const Color(0xFF6A7282)),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF6A7282),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF101828),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -466,64 +523,88 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         ),
         const SizedBox(height: 12),
         ...others.map((b) => Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 標題列：名稱和標籤
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          b.name,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            b.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF101828),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         if (b.allowDuplicate)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF3CD),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text(
-                              'ignore-dup-check',
+                              'Allow Duplicate',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF856404),
                               ),
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${b.startNumber} - ${b.endNumber}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF6A7282),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Printed：${_getPrintCount(b.id)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF6A7282),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                     const SizedBox(height: 12),
+                    
+                    // 資訊行：範圍和已列印數量
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildInfoItem(
+                            label: 'Range',
+                            value: '${b.startNumber} - ${b.endNumber}',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: _buildInfoItem(
+                            label: 'Printed',
+                            value: '${_getPrintCount(b.id)}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // 設為 Active 按鈕
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
+                      child: OutlinedButton.icon(
                         onPressed: () async {
                           final ok = await _showConfirm(
                             title: 'Set Active',
@@ -532,7 +613,6 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           );
                           if (!ok) return;
 
-                          // 呼叫 API 設定為 Active
                           setState(() {
                             _isLoading = true;
                           });
@@ -542,9 +622,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
                             if (!mounted) return;
 
-                            // 更新本地狀態
                             setState(() {
-                              // 更新 current 與列表 isActive 標記
                               _currentBatch = b.copyWith(isActive: true);
                               for (var i = 0; i < _batches.length; i++) {
                                 final item = _batches[i];
@@ -555,7 +633,6 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
                             _showSuccessMessage('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})');
 
-                            // 重新載入批次資料以同步後端狀態
                             await _loadBatchesFromApi();
                           } catch (e) {
                             if (!mounted) return;
@@ -567,11 +644,16 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             _showErrorMessage('設定失敗：$e');
                           }
                         },
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Set Active'),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFD1D5DC)),
-                          foregroundColor: const Color(0xFF101828),
+                          side: const BorderSide(color: Color(0xFF2B7FFF)),
+                          foregroundColor: const Color(0xFF2B7FFF),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        child: const Text('Set Active'),
                       ),
                     ),
                   ],
@@ -609,96 +691,100 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 標題欄
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'New Batch',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // 表單內容
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFFFF), 
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 標題欄
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTextField(
-                      controller: nameController,
-                      label: 'Batch Name',
-                      hint: 'LCA1210',
+                    const Text(
+                      'New Batch',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildCodeInputField(
-                      label: 'Start Number',
-                      onChanged: (value) => startController.text = value,
-                      initialValue: '',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildCodeInputField(
-                      label: 'End Number',
-                      onChanged: (value) => endController.text = value,
-                      initialValue: '',
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Create 按鈕
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => _handleCreateBatch(
-                    context,
-                    nameController.text,
-                    startController.text,
-                    endController.text,
+                const SizedBox(height: 16),
+                // 表單內容
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF), 
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2B7FFF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: nameController,
+                        label: 'Batch Name',
+                        hint: 'LCA1210',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCodeInputField(
+                        label: 'Start Number',
+                        onChanged: (value) => startController.text = value,
+                        initialValue: '',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCodeInputField(
+                        label: 'End Number',
+                        onChanged: (value) => endController.text = value,
+                        initialValue: '',
+                      ),
+                    ],
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Create',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                // Create 按鈕
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _handleCreateBatch(
+                      context,
+                      nameController.text,
+                      startController.text,
+                      endController.text,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2B7FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Create',
+                            style: TextStyle(
+                              fontSize: 17,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -717,97 +803,101 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 標題欄
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Edit Batch',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // 表單內容
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFFFF), 
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 標題欄
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTextField(
-                      controller: nameController,
-                      label: 'Batch Name',
-                      hint: batch.name,
+                    const Text(
+                      'Edit Batch',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    _buildCodeInputField(
-                      label: 'Start Number',
-                      onChanged: (value) => startController.text = value,
-                      initialValue: batch.startNumber.toString().padLeft(5, '0'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildCodeInputField(
-                      label: 'End Number',
-                      onChanged: (value) => endController.text = value,
-                      initialValue: batch.endNumber.toString().padLeft(5, '0'),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Update 按鈕
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => _handleUpdateBatch(
-                    context,
-                    batch,
-                    nameController.text,
-                    startController.text,
-                    endController.text,  
+                const SizedBox(height: 16),
+                // 表單內容
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF), 
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2B7FFF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: nameController,
+                        label: 'Batch Name',
+                        hint: batch.name,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCodeInputField(
+                        label: 'Start Number',
+                        onChanged: (value) => startController.text = value,
+                        initialValue: batch.startNumber.toString().padLeft(5, '0'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCodeInputField(
+                        label: 'End Number',
+                        onChanged: (value) => endController.text = value,
+                        initialValue: batch.endNumber.toString().padLeft(5, '0'),
+                      ),
+                    ],
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Save',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                // Update 按鈕
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _handleUpdateBatch(
+                      context,
+                      batch,
+                      nameController.text,
+                      startController.text,
+                      endController.text,  
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2B7FFF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontSize: 17,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
