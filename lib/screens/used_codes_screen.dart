@@ -4,12 +4,10 @@ import '../services/api_service.dart';
 
 /// 已使用代碼畫面（階段四：App 查詢紀錄）
 class UsedCodesScreen extends StatefulWidget {
-  final Batch currentBatch;
   final void Function(int newIndex)? onSwitchTab;
 
   const UsedCodesScreen({
     super.key,
-    required this.currentBatch,
     this.onSwitchTab,
   });
 
@@ -23,6 +21,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
   List<AlertRecord> _alerts = [];
   bool _isLoading = false;
   bool? _allowDuplicate; // 從 API 取得的 allowDuplicate 狀態
+  Batch? _currentBatch; // 當前 active 批次
 
   @override
   void initState() {
@@ -37,39 +36,54 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     });
 
     try {
-      // 將 batch.id 轉換為 int（ruleId）
-      final ruleId = int.tryParse(widget.currentBatch.id);
-      
       // 並行載入批次資訊、成功紀錄和錯誤紀錄
       final results = await Future.wait([
-        ApiService.getBatchList(), // 取得批次清單以確認 allowDuplicate 狀態
-        ApiService.getSuccessLogs(ruleId: ruleId),
-        ApiService.getAlertLogs(ruleId: ruleId),
+        ApiService.getBatchList(), // 取得批次清單以找出 active 批次
+        ApiService.getSuccessLogs(), // 先取得所有 log
+        ApiService.getAlertLogs(), // 先取得所有 log
       ]);
 
       final batchList = results[0];
       final successLogs = results[1];
       final alertLogs = results[2];
       
-      // 從批次清單中找到對應的 batch（根據 ruleId，ruleId 是 int 類型）
+      // 找出當前 active 批次
+      Batch? activeBatch;
       bool allowDuplicate = false;
-      if (ruleId != null) {
-        try {
-          final batchData = batchList.firstWhere(
-            (batch) {
-              final batchRuleId = batch['ruleId'];
-              return batchRuleId is int && batchRuleId == ruleId;
-            },
-          );
-          allowDuplicate = batchData['allowDuplicate'] == true;
-        } catch (e) {
-          // 如果找不到對應的 batch，使用預設值 false
-          allowDuplicate = false;
-        }
+      
+      try {
+        // 從批次清單中找到 isActive = true 的批次
+        final activeBatchData = batchList.firstWhere(
+          (batch) => batch['isActive'] == true,
+        );
+        
+        final startCode = activeBatchData['startCode']?.toString() ?? '';
+        final endCode = activeBatchData['endCode']?.toString() ?? '';
+        final startNum = int.tryParse(startCode) ?? startCode.hashCode;
+        final endNum = int.tryParse(endCode) ?? endCode.hashCode;
+        
+        activeBatch = Batch(
+          id: activeBatchData['ruleId']?.toString() ?? '',
+          name: activeBatchData['batchName']?.toString() ?? '',
+          startNumber: startNum,
+          endNumber: endNum,
+          isActive: true,
+          allowDuplicate: activeBatchData['allowDuplicate'] == true,
+        );
+        
+        allowDuplicate = activeBatch.allowDuplicate;
+      } catch (e) {
+        // 如果找不到 active 批次，使用預設值
+        activeBatch = null;
+        allowDuplicate = false;
       }
+      
+      // 取得 active 批次的 ruleId
+      final ruleId = activeBatch != null ? int.tryParse(activeBatch.id) : null;
 
       setState(() {
-        // 更新 allowDuplicate 狀態
+        // 更新當前 active 批次和 allowDuplicate 狀態
+        _currentBatch = activeBatch;
         _allowDuplicate = allowDuplicate;
         
         // 根據 ruleId 過濾 log（ruleId 是 int 類型）
@@ -78,14 +92,14 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                 final logRuleId = log['ruleId'];
                 return logRuleId is int && logRuleId == ruleId;
               }).toList()
-            : successLogs;
+            : [];
         
         final filteredAlertLogs = ruleId != null
             ? alertLogs.where((log) {
                 final logRuleId = log['ruleId'];
                 return logRuleId is int && logRuleId == ruleId;
               }).toList()
-            : alertLogs;
+            : [];
         
         // 轉換為 CodeRecord
         _codes = filteredSuccessLogs.map((log) {
@@ -150,26 +164,48 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 標題：顯示 Batch Name 與 Batch Range
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Batch Name: ${widget.currentBatch.name}',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w500,
+              _currentBatch != null
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Batch Name: ${_currentBatch!.name}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Batch Range: ${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF6A7282),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No Active Batch',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6A7282),
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Please create and activate a batch first',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF6A7282),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Batch Range: ${widget.currentBatch.startNumber} - ${widget.currentBatch.endNumber}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF6A7282),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
               
               // Ignore duplicate check 提醒（根據 API 取得的 allowDuplicate 狀態顯示）

@@ -63,26 +63,26 @@ xcuserdata/
 *.ipa
 *.xcuserstate
 
-# macOS related (鋆?)
+# macOS related 
 /macos/Flutter/ephemeral/
 /macos/.symlinks/
 
-# Windows related (鋆?)
+# Windows related 
 /windows/flutter/ephemeral/
 
-# Linux related (鋆?)
+# Linux related 
 /linux/flutter/ephemeral/
 
 # Environment variables
 .env
 .env.local
 
-# IDE related (鋆?)
+# IDE related 
 .vscode/
 *.sublime-project
 *.sublime-workspace
 
-# Flutter plugins (鋆?)
+# Flutter plugins 
 .flutter-plugins
 .packages
 

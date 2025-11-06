@@ -14,6 +14,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // 啟用 core library desugaring（flutter_local_notifications 需要）
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -50,6 +52,9 @@ dependencies {
     
     // Firebase Analytics (可選，如果不需要可以移除)
     implementation("com.google.firebase:firebase-analytics")
+    
+    // Core library desugaring（flutter_local_notifications 需要，版本需 2.1.4 或以上）
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     
     // 如果需要使用其他 Firebase 產品，可以在此添加
     // implementation("com.google.firebase:firebase-messaging")

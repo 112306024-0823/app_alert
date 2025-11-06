@@ -7,8 +7,6 @@ import 'firebase_msg.dart';
 import 'firebase_options.dart';
 import 'screens/batch_settings_screen.dart';
 import 'screens/used_codes_screen.dart';
-import 'screens/test_scanner_screen.dart';
-import 'models/batch.dart';
 import 'utils/navigation_helper.dart';
 
 
@@ -67,7 +65,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _currentIndex = 0;
-  Batch? _selectedBatch;
 
   @override
   void initState() {
@@ -81,26 +78,16 @@ class _MyHomePageState extends State<MyHomePage> {
         onSwitchTab: (newIndex, batch) {
           setState(() {
             _currentIndex = newIndex;
-            _selectedBatch = batch;
           });
         },
       ),
       UsedCodesScreen(
-        currentBatch: _selectedBatch ?? Batch(
-          id: '1',
-          name: '1234',
-          startNumber: 500,
-          endNumber: 1000,
-          isActive: true,
-          allowDuplicate: false,
-        ),
         onSwitchTab: (newIndex) {
           setState(() {
             _currentIndex = newIndex;
           });
         },
       ),
-      const TestScannerScreen(),
     ];
   }
 
@@ -142,11 +129,6 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icons.assignment,
               label: 'Used Codes',
               index: 1,
-            ),
-            _buildNavItem(
-              icon: Icons.qr_code_scanner,
-              label: 'Test Scanner',
-              index: 2,
             ),
           ],
         ),
