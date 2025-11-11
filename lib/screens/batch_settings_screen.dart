@@ -1037,6 +1037,18 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     );
   }
 
+  String? _extractBatchIdFromResponse(
+    Map<String, dynamic> response,
+  ) {
+    const possibleKeys = ['ruleId', 'id', 'batchId'];
+    for (final key in possibleKeys) {
+      final value = response[key];
+      if (value == null) continue;
+      return value.toString();
+    }
+    return null;
+  }
+
   /// 處理建立批次
   Future<void> _handleCreateBatch(
     BuildContext context,
@@ -1079,7 +1091,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     });
 
     try {
-      await ApiService.createBatch(
+      final createdBatch = await ApiService.createBatch(
         name: name,
         start: start,
         end: end,
@@ -1090,7 +1102,25 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       Navigator.of(context).pop();
       _showSuccessMessage('批次建立成功！');
 
-      // 重新載入批次資料以同步後端狀態
+      final newBatchId = _extractBatchIdFromResponse(createdBatch);
+
+      if (newBatchId != null) {
+        try {
+          await ApiService.setBatchActive(ruleId: newBatchId);
+        } catch (e) {
+          if (!mounted) return;
+
+          setState(() {
+            _isLoading = false;
+          });
+
+          _showErrorMessage('批次建立成功，但設定為當前批次失敗：$e');
+          await _loadBatchesFromApi();
+          return;
+        }
+      }
+
+      // 重新載入批次資料以同步後端狀態（並反映新 Active 批次）
       await _loadBatchesFromApi();
     } catch (e) {
       if (!mounted) return;

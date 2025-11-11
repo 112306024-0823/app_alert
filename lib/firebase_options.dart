@@ -41,48 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDMvTHAPe4NcXQ-VAkeHsIJD-ypBIQsPn8',
-    appId: '1:815829848221:web:f3884ed7459f4e381a0474',
-    messagingSenderId: '815829848221',
-    projectId: 'appalert-db9d5',
-    authDomain: 'appalert-db9d5.firebaseapp.com',
-    storageBucket: 'appalert-db9d5.firebasestorage.app',
-    measurementId: 'G-329RLWWB8H',
+    apiKey: 'AIzaSyDyCTaoTyv804Jwb1Fx9qRTGjLD79UJRjM',
+    appId: '1:987743532779:web:c0ddcc58eef1d2dfae70ae',
+    messagingSenderId: '987743532779',
+    projectId: 'barcodeappalert',
+    authDomain: 'barcodeappalert.firebaseapp.com',
+    storageBucket: 'barcodeappalert.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC8szhp9fYKL5clKgzX-eO4qpuXkfL-1tE',
-    appId: '1:815829848221:android:f6f97b6a967697251a0474',
-    messagingSenderId: '815829848221',
-    projectId: 'appalert-db9d5',
-    storageBucket: 'appalert-db9d5.firebasestorage.app',
+    apiKey: 'AIzaSyBIlfHOqN1bF0XzrrYmNn5M69wKTV8hP9g',
+    appId: '1:987743532779:android:b430ec1ba2d6a8e3ae70ae',
+    messagingSenderId: '987743532779',
+    projectId: 'barcodeappalert',
+    storageBucket: 'barcodeappalert.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCR96FX7qutPUZj_ypTCIZMSHfUs8HqBQ0',
-    appId: '1:815829848221:ios:9640c978a3338dde1a0474',
-    messagingSenderId: '815829848221',
-    projectId: 'appalert-db9d5',
-    storageBucket: 'appalert-db9d5.firebasestorage.app',
+    apiKey: 'AIzaSyAA728y-_9ueCJZnR8JQXKHKocPfBNWggg',
+    appId: '1:987743532779:ios:374a0872a10dde1eae70ae',
+    messagingSenderId: '987743532779',
+    projectId: 'barcodeappalert',
+    storageBucket: 'barcodeappalert.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCR96FX7qutPUZj_ypTCIZMSHfUs8HqBQ0',
-    appId: '1:815829848221:ios:9640c978a3338dde1a0474',
-    messagingSenderId: '815829848221',
-    projectId: 'appalert-db9d5',
-    storageBucket: 'appalert-db9d5.firebasestorage.app',
+    apiKey: 'AIzaSyAA728y-_9ueCJZnR8JQXKHKocPfBNWggg',
+    appId: '1:987743532779:ios:374a0872a10dde1eae70ae',
+    messagingSenderId: '987743532779',
+    projectId: 'barcodeappalert',
+    storageBucket: 'barcodeappalert.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDMvTHAPe4NcXQ-VAkeHsIJD-ypBIQsPn8',
-    appId: '1:815829848221:web:39032e77b68b37f41a0474',
-    messagingSenderId: '815829848221',
-    projectId: 'appalert-db9d5',
-    authDomain: 'appalert-db9d5.firebaseapp.com',
-    storageBucket: 'appalert-db9d5.firebasestorage.app',
-    measurementId: 'G-6VGZGES3PD',
+    apiKey: 'AIzaSyDyCTaoTyv804Jwb1Fx9qRTGjLD79UJRjM',
+    appId: '1:987743532779:web:70582c9b0aeda5bbae70ae',
+    messagingSenderId: '987743532779',
+    projectId: 'barcodeappalert',
+    authDomain: 'barcodeappalert.firebaseapp.com',
+    storageBucket: 'barcodeappalert.firebasestorage.app',
   );
+
 }
