@@ -127,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             _buildNavItem(
               icon: Icons.assignment,
-              label: 'Used Codes',
+              label: 'Scan Records',
               index: 1,
             ),
           ],

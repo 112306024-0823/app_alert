@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/batch.dart';
 import '../services/api_service.dart';
+import '../widgets/system_notification_banner.dart';
 
 /// 批次設定畫面
 class BatchSettingsScreen extends StatefulWidget {
@@ -14,12 +17,16 @@ class BatchSettingsScreen extends StatefulWidget {
   State<BatchSettingsScreen> createState() => _BatchSettingsScreenState();
 }
 
-class _BatchSettingsScreenState extends State<BatchSettingsScreen> {  
+class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   final List<Batch> _batches = [];
   Batch? _currentBatch;
   bool _isLoading = false;
   final Set<int> _batchesWithLogs = {}; // 儲存有 log 的 ruleId 集合
   final Map<int, int> _batchPrintCounts = {}; // 儲存每個 batch 的已列印數量 (ruleId -> count)
+  Timer? _notificationTimer;
+  String? _notificationMessage;
+  NotificationType? _notificationType;
+  bool _isNotificationVisible = false;
 
   @override
   void initState() {
@@ -116,47 +123,80 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   
 
   @override
+  void dispose() {
+    _notificationTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final double contentTopPadding = _isNotificationVisible ? 96 : 24;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 標題和新增按鈕
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Batch',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w400,
-                      height: 42/28,
+        child: Stack(
+          children: [
+            if (_notificationType != null && _notificationMessage != null)
+              Positioned(
+                top: 16,
+                left: 0,
+                right: 0,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  offset: _isNotificationVisible ? Offset.zero : const Offset(0, -1),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: _isNotificationVisible ? 1 : 0,
+                    child: SystemNotificationBanner(
+                      type: _notificationType!,
+                      title: 'Batch Settings',
+                      message: _notificationMessage!,
+                      isVisible: true,
+                      onDismiss: _hideNotificationBanner,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFF2B7FFF),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _showCreateBatchDialog(),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 24),
+            Positioned.fill(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, contentTopPadding, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 標題和新增按鈕
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Batch',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w400,
+                            height: 42 / 28,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF2B7FFF),
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => _showCreateBatchDialog(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
 
-              // 內容區域
-              Expanded(
-                child: _batches.isEmpty
-                    ? _buildEmptyState()
-                    : _buildBatchList(),
+                    // 內容區域
+                    Expanded(
+                      child: _batches.isEmpty ? _buildEmptyState() : _buildBatchList(),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -226,26 +266,52 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     return result ?? false;
   }
 
+  void _showNotificationBanner({
+    required NotificationType type,
+    required String message,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!mounted) return;
+
+    _notificationTimer?.cancel();
+
+    setState(() {
+      _notificationType = type;
+      _notificationMessage = message;
+      _isNotificationVisible = true;
+    });
+
+    _notificationTimer = Timer(duration, () {
+      if (!mounted) return;
+      setState(() {
+        _isNotificationVisible = false;
+      });
+    });
+  }
+
+  void _hideNotificationBanner() {
+    if (!mounted) return;
+    _notificationTimer?.cancel();
+    setState(() {
+      _isNotificationVisible = false;
+    });
+  }
+
   /// 顯示成功訊息
   void _showSuccessMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
+    _showNotificationBanner(
+      type: NotificationType.success,
+      message: message,
     );
   }
 
   /// 顯示錯誤訊息
   void _showErrorMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+    _showNotificationBanner(
+      type: NotificationType.error,
+      message: message,
     );
   }
 
@@ -418,12 +484,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             _isLoading = false;
                           });
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('更新失敗：$e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          _showErrorMessage('更新失敗：$e');
                         }
                       },
                       activeColor: const Color(0xFF2B7FFF),
@@ -944,6 +1005,23 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
 
+    final normalizedName = name.trim().toLowerCase();
+    final existingNames = <String>{};
+    if (_currentBatch != null && _currentBatch!.id != original.id) {
+      existingNames.add(_currentBatch!.name.trim().toLowerCase());
+    }
+    for (final batch in _batches) {
+      if (batch.id == original.id) continue;
+      existingNames.add(batch.name.trim().toLowerCase());
+    }
+    if (existingNames.contains(normalizedName)) {
+      _showNotificationBanner(
+        type: NotificationType.warning,
+        message: '此批次名稱已存在，請輸入不同的名稱',
+      );
+      return;
+    }
+
     setState(() { _isLoading = true; });
     try {
       await ApiService.updateBatch(
@@ -1060,6 +1138,22 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       _showErrorMessage('請填寫所有欄位');
       return;
     }
+
+    final normalizedName = name.trim().toLowerCase();
+    final existingNames = <String>{};
+    if (_currentBatch != null) {
+      existingNames.add(_currentBatch!.name.trim().toLowerCase());
+    }
+    for (final batch in _batches) {
+      existingNames.add(batch.name.trim().toLowerCase());
+    }
+    if (existingNames.contains(normalizedName)) {
+      _showNotificationBanner(
+        type: NotificationType.warning,
+        message: '此批次名稱已存在，請輸入不同的名稱',
+      );
+      return;
+    }
     
     // 驗證 Start Number 和 End Number 必須是 5 碼數字
     if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
@@ -1100,7 +1194,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       if (!mounted) return;
 
       Navigator.of(context).pop();
-      _showSuccessMessage('批次建立成功！');
+      _showSuccessMessage('批次建立成功，已設定為目前批次');
 
       final newBatchId = _extractBatchIdFromResponse(createdBatch);
 
