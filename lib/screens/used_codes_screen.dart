@@ -195,7 +195,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('載入資料失敗：$e'),
+            content: Text('Failed to load data: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -409,8 +409,8 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             ),
             Text(
               _searchQuery.isEmpty
-                  ? '列印數：${_codes.length}'
-                  : '列印數：${_filteredCodes.length} / ${_codes.length}',
+                  ? 'Printed: ${_codes.length}'
+                  : 'Printed: ${_filteredCodes.length} / ${_codes.length}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF4A5565),
@@ -424,7 +424,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Center(
                   child: Text(
-                    '找不到符合 "$_searchQuery" 的代碼',
+                    'No codes found matching "$_searchQuery"',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF6A7282),
@@ -466,8 +466,8 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             ),
             Text(
               _searchQuery.isEmpty
-                  ? '警告次數：${_alerts.length}'
-                  : '警告次數：${_filteredAlerts.length} / ${_alerts.length}',
+                  ? 'Alerted: ${_alerts.length}'
+                  : 'Alerted: ${_filteredAlerts.length} / ${_alerts.length}',
               style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF4A5565),
@@ -481,7 +481,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Center(
                   child: Text(
-                    '找不到符合 "$_searchQuery" 的警告記錄',
+                    'No records found for "$_searchQuery"',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF6A7282),

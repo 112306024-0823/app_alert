@@ -40,7 +40,8 @@
             android:name="flutterEmbedding"
             android:value="2" />
         
-        <!-- Firebase Cloud Messaging -->
+        <!-- Firebase Cloud Messaging -->MKL0000001
+        
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             android:exported="false">

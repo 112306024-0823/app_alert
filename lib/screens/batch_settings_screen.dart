@@ -116,7 +116,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       });
 
       // API 失敗時
-      _showErrorMessage('載入批次失敗：$e');
+      _showErrorMessage('Failed to load batches: $e');
     }
   }
 
@@ -209,7 +209,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
-            '尚無批次',
+            'No batches yet',
             style: TextStyle(
               fontSize: 17,
               color: Color(0xFF99A1AF),
@@ -217,7 +217,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            '點擊右上角 + 建立第一個批次',
+            'Click the + button to create the first batch',
             style: TextStyle(
               fontSize: 15,
               color: Color(0xFF99A1AF),
@@ -484,7 +484,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                             _isLoading = false;
                           });
 
-                          _showErrorMessage('更新失敗：$e');
+                          _showErrorMessage('Failed to update: $e');
                         }
                       },
                       activeColor: const Color(0xFF2B7FFF),
@@ -692,7 +692,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _isLoading = false;
                             });
 
-                            _showSuccessMessage('已切換當前批次為 ${b.name} (${b.startNumber} - ${b.endNumber})');
+                            _showSuccessMessage('Switched current batch to ${b.name} (${b.startNumber} - ${b.endNumber})');
 
                             await _loadBatchesFromApi();
                           } catch (e) {
@@ -702,7 +702,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _isLoading = false;
                             });
 
-                            _showErrorMessage('設定失敗：$e');
+                            _showErrorMessage('Failed to set: $e');
                           }
                         },
                         icon: const Icon(Icons.check_circle_outline, size: 18),
@@ -976,18 +976,18 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     String end,
   ) async {
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      _showErrorMessage('請填寫所有欄位');
+      _showErrorMessage('Please fill in all fields');
       return;
     }
     
     // 驗證 Start Number 和 End Number 必須是 5 碼數字
     if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
-      _showErrorMessage('Start Number 必須是 5 碼數字');
+      _showErrorMessage('Start Number should be 5 digits');
       return;
     }
     
     if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
-      _showErrorMessage('End Number 必須是 5 碼數字');
+      _showErrorMessage('End Number should be 5 digits');
       return;
     }
     
@@ -996,12 +996,12 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final endNum = int.tryParse(end);
     
     if (startNum == null || endNum == null) {
-      _showErrorMessage('數字格式錯誤');
+      _showErrorMessage('Number format error');
       return;
     }
     
     if (endNum <= startNum) {
-      _showErrorMessage('End Number 必須大於 Start Number');
+      _showErrorMessage('End Number must be greater than Start Number');
       return;
     }
 
@@ -1017,7 +1017,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     if (existingNames.contains(normalizedName)) {
       _showNotificationBanner(
         type: NotificationType.warning,
-        message: '此批次名稱已存在，請輸入不同的名稱',
+        message: 'This batch name already exists, please enter a different name',
       );
       return;
     }
@@ -1036,14 +1036,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       if (!mounted) return;
       
       Navigator.of(context).pop();
-      _showSuccessMessage('批次已更新');
+      _showSuccessMessage('Batch updated successfully');
       
       // 重新載入批次資料以同步後端狀態
       await _loadBatchesFromApi();
     } catch (e) {
       if (!mounted) return;
       setState(() { _isLoading = false; });
-      _showErrorMessage('更新失敗：$e');
+      _showErrorMessage('Failed to update: $e');
     }
   }
 
@@ -1135,7 +1135,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     String end,
   ) async {
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      _showErrorMessage('請填寫所有欄位');
+      _showErrorMessage('Please fill in all fields');
       return;
     }
 
@@ -1150,19 +1150,19 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     if (existingNames.contains(normalizedName)) {
       _showNotificationBanner(
         type: NotificationType.warning,
-        message: '此批次名稱已存在，請輸入不同的名稱',
+        message: 'This batch name already exists, please enter a different name',
       );
       return;
     }
     
     // 驗證 Start Number 和 End Number 必須是 5 碼數字
     if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
-      _showErrorMessage('Start Number 必須是 5 碼數字');
+      _showErrorMessage('Start Number must be 5 digits');
       return;
     }
     
     if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
-      _showErrorMessage('End Number 必須是 5 碼數字');
+      _showErrorMessage('End Number must be 5 digits');
       return;
     }
     
@@ -1171,12 +1171,12 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final endNum = int.tryParse(end);
     
     if (startNum == null || endNum == null) {
-      _showErrorMessage('數字格式錯誤');
+      _showErrorMessage('Number format error');
       return;
     }
     
     if (endNum <= startNum) {
-      _showErrorMessage('End Number 必須大於 Start Number');
+      _showErrorMessage('End Number must be greater than Start Number');
       return;
     }
 
@@ -1194,7 +1194,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       if (!mounted) return;
 
       Navigator.of(context).pop();
-      _showSuccessMessage('批次建立成功，已設定為目前批次');
+      _showSuccessMessage('Batch created successfully, set as current batch');
 
       final newBatchId = _extractBatchIdFromResponse(createdBatch);
 
@@ -1208,7 +1208,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
             _isLoading = false;
           });
 
-          _showErrorMessage('批次建立成功，但設定為當前批次失敗：$e');
+          _showErrorMessage('Batch created successfully, but failed to set as current batch: $e');
           await _loadBatchesFromApi();
           return;
         }
@@ -1223,7 +1223,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         _isLoading = false;
       });
 
-      _showErrorMessage('建立批次失敗：$e');
+      _showErrorMessage('Failed to create batch: $e');
     }
   }
 }
