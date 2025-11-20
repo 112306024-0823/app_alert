@@ -509,7 +509,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2B7FFF),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -712,7 +712,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF2B7FFF)),
                           foregroundColor: const Color(0xFF2B7FFF),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
