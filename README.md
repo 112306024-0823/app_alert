@@ -1,184 +1,385 @@
-# flutter_application
+# Barcode Validator App
 
-A new Flutter project. Flutter Alert APP
+A Flutter application for managing batch rules and monitoring barcode scanning records with real-time push notifications.
 
-## 如何運行 Flutter 專案
+## 📋 Overview
 
-### 前置需求
-- Flutter SDK 3.9.2 或以上
-- Android Studio / Xcode（iOS）或 VS Code
-- 已連接的實體裝置或模擬器
+This application provides a comprehensive solution for barcode validation management, featuring:
+- Batch rule creation and management
+- Real-time scan record monitoring
+- Push notifications via Firebase Cloud Messaging (FCM)
+- Duplicate code detection
+- Alert tracking system
 
-### 快速啟動步驟
+## ✨ Key Features
 
-#### 1. 檢查環境
-```bash
-flutter doctor
+### 1. Batch Settings
+- **Create Batch Rules**: Define validation rules with start/end code ranges
+- **Manage Active Batch**: Only one batch can be active at a time
+- **Allow Duplicate Toggle**: Enable/disable duplicate code validation per batch
+- **View Records**: Quick access to scan records for each batch
+- **Edit Functionality**: Modify batch details (disabled if records exist)
+
+### 2. Scan Records
+- **Valid Codes Section**: View all successfully scanned codes with timestamps
+- **Alert Records Section**: Monitor codes that triggered alerts (Out of Range, Duplicate)
+- **Independent Scrolling**: Each section scrolls independently for better UX
+- **Search Function**: Filter records by code
+- **Pull-to-Refresh**: Refresh data with a simple pull gesture
+- **Real-time Updates**: Automatic updates when new scans occur via FCM
+
+### 3. Push Notifications
+- **Instant Alerts**: Receive immediate notifications for scan events
+- **Background Support**: Notifications work even when app is closed
+- **Automatic Navigation**: Tap notification to jump directly to relevant records
+
+## 🏗️ Technical Architecture
+
+### Frontend (Flutter)
 ```
-確認所有依賴都已正確安裝
-
-#### 2. 安裝依賴套件
-```bash
-flutter pub get
+lib/
+├── config/
+│   └── api_config.dart          # API configuration
+├── models/
+│   └── batch.dart               # Batch data model
+├── screens/
+│   ├── batch_settings_screen.dart   # Batch management UI
+│   └── used_codes_screen.dart       # Scan records UI
+├── services/
+│   ├── api_service.dart         # Backend API communication
+│   └── fcm_service.dart         # Firebase Cloud Messaging
+├── utils/
+│   └── navigation_helper.dart   # Global navigation
+├── widgets/
+│   └── system_notification_banner.dart  # In-app notifications
+├── firebase_msg.dart            # FCM message handlers
+├── firebase_options.dart        # Firebase configuration
+└── main.dart                    # App entry point
 ```
 
-#### 3. 查看可用裝置
+### Backend (C# API + SQL Server)
+- **API Framework**: ASP.NET Core
+- **Database**: SQL Server
+- **Tables**: 
+  - `VLD_BatchRules` - Batch rule definitions
+  - `VLD_ScanLogs` - Scan records and validation results
+
+### Communication Flow
+```
+Flutter App ←→ C# API ←→ SQL Server
+     ↓
+Firebase Cloud Messaging (FCM)
+     ↓
+Push Notifications
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Flutter SDK**: 3.9.2 or higher
+- **Development Tools**: Android Studio / Xcode / VS Code
+- **Backend API**: C# API running on `http://192.168.4.54/BarcodeValidatorApi`
+- **Firebase Project**: Configured with FCM enabled
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd flutter_application
+   ```
+
+2. **Install dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Verify environment**
+   ```bash
+   flutter doctor
+   ```
+
+4. **Configure API endpoint**
+   
+   Edit `lib/config/api_config.dart`:
+   ```dart
+   static const String baseUrl = 'http://192.168.4.54/BarcodeValidatorApi';
+   ```
+
+5. **Set up Firebase** (see Firebase Setup section below)
+
+### Running the App
+
+**Method 1: Command Line (Recommended)**
 ```bash
+# Run on default device
+flutter run
+
+# Run on specific device
+flutter run -d <device_id>
+
+# List available devices
 flutter devices
 ```
 
-#### 4. 運行應用程式
+**Method 2: VS Code**
+- Press `F5` or click "Run > Start Debugging"
+- Select target device
 
-**方式一：命令列（推薦）**
-```bash
-# 直接運行（會自動選擇第一個可用裝置）
-flutter run
+**Method 3: Android Studio**
+- Click the "Run" button (green play icon)
+- Select target device
 
-# 或指定裝置
-flutter run -d <device_id>
-```
+### Hot Reload
+While the app is running:
+- Press `r`: Quick reload (preserve state)
+- Press `R`: Full restart (reset state)
+- Press `q`: Quit application
 
-**方式二：VS Code**
-- 按 `F5` 或點擊「Run > Start Debugging」
-- 選擇目標裝置
+## 🔧 Configuration
 
-**方式三：Android Studio**
-- 點擊右上角「Run」按鈕（綠色播放圖示）
-- 選擇目標裝置
+### API Configuration
 
-### 熱重載功能
-
-應用程式運行時，在終端可以：
-- 按 `r`：快速重載（保留狀態）
-- 按 `R`：完整重啟（重置狀態）
-- 按 `q`：退出應用程式
-
-### 常用指令
-
-```bash
-# 清理建置快取
-flutter clean
-
-# 重新安裝依賴
-flutter pub get
-
-# 分析程式碼
-flutter analyze
-
-# 建置 APK（Android）
-flutter build apk
-
-# 建置 iOS（需在 macOS）
-flutter build ios
-
-# 建置 Web
-flutter build web
-```
-
-### 專案結構
-
-```
-lib/
-├── config/          # 設定檔（API 配置等）
-├── models/          # 資料模型
-├── screens/         # 畫面頁面
-├── services/        # API 服務
-├── widgets/         # 共用組件
-└── main.dart        # 應用程式進入點
-```
-
-### API 設定
-
-編輯 `lib/config/api_config.dart` 設定後端 API Base URL：
+Location: `lib/config/api_config.dart`
 
 ```dart
-static const String baseUrl = 'http://192.168.4.54/BarcodeValidatorApi';
+class ApiConfig {
+  // Development environment
+  static const String baseUrl = 'http://192.168.4.54/BarcodeValidatorApi';
+  
+  // Production environment (update when deploying)
+  // static const String baseUrl = 'https://your-domain.com/BarcodeValidatorApi';
+  
+  static const int timeoutSeconds = 30;
+}
 ```
 
-### 在實體手機上測試
+### API Endpoints
 
-#### Android 手機設定
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/Batch/create` | POST | Create new batch rule |
+| `/api/Batch/list` | GET | Get all batch rules |
+| `/api/Batch/update/{ruleId}` | PUT | Update batch rule |
+| `/api/Batch/update-partial/{ruleId}` | PATCH | Partial update (e.g., toggle allowDuplicate) |
+| `/api/Batch/set-active` | POST | Set a batch as active |
+| `/api/Batch/register` | POST | Register FCM token |
+| `/api/Batch/success` | GET | Get success logs |
+| `/api/Batch/alerts` | GET | Get alert logs |
 
-1. **啟用開發者選項**
-   - 進入「設定」→「關於手機」
-   - 連續點擊「版本號碼」7 次，直到出現「您已成為開發人員」
+**Test API connection:**
+```
+http://192.168.4.54/BarcodeValidatorApi/swagger
+```
 
-2. **啟用 USB 偵錯**
-   - 進入「設定」→「開發人員選項」
-   - 開啟「USB 偵錯」
-   - 開啟「USB 安裝」（選項）
+## 🔥 Firebase Setup
 
-3. **連接手機**
-   - 使用 USB 線連接手機和電腦
-   - 手機上會出現「允許 USB 偵錯？」提示，選擇「允許」
-   - 勾選「一律允許這部電腦」
+### 1. Download Configuration Files
 
-4. **確認連接**
+**For Android:**
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select project: `barcodevalidatorapp`
+3. Navigate to Project Settings → Your apps → Android app
+4. Download `google-services.json`
+5. Place in: `android/app/google-services.json`
+
+**For iOS (if needed):**
+1. Navigate to Project Settings → Your apps → iOS app
+2. Download `GoogleService-Info.plist`
+3. Place in: `ios/Runner/GoogleService-Info.plist`
+
+### 2. Verify Configuration
+
+The following are already configured:
+- ✅ `android/app/build.gradle.kts` - Google Services plugin applied
+- ✅ `android/app/src/main/AndroidManifest.xml` - Notification permissions
+- ✅ FCM service implementation in `lib/services/fcm_service.dart`
+
+### 3. Test FCM
+
+After running the app, check logs for:
+```
+FCM Token: <your-token>
+FCM Token 已成功註冊到後端
+```
+
+## 📱 Testing on Physical Devices
+
+### Android Setup
+
+1. **Enable Developer Options**
+   - Go to Settings → About Phone
+   - Tap "Build Number" 7 times
+   - You should see "You are now a developer!"
+
+2. **Enable USB Debugging**
+   - Go to Settings → Developer Options
+   - Enable "USB Debugging"
+   - Enable "USB Installation" (optional)
+
+3. **Connect Device**
+   - Connect phone to computer via USB
+   - Accept "Allow USB Debugging?" prompt on phone
+   - Check "Always allow from this computer"
+
+4. **Verify Connection**
    ```bash
    flutter devices
    ```
-   應該會看到你的手機裝置（例如：`sdk gphone64 arm64`）
+   You should see your device listed
 
-5. **執行應用程式**
-   ```bash
-   flutter run
-   ```
-   或指定裝置：
-   ```bash
-   flutter run -d <device_id>
-   ```
-
-#### iOS 手機設定（需 macOS）
-
-1. **連接 iPhone**
-   - 使用 USB 線連接 iPhone 和 Mac
-   - 在 iPhone 上點擊「信任這部電腦」
-
-2. **確認連接**
-   ```bash
-   flutter devices
-   ```
-
-3. **執行應用程式**
+5. **Run App**
    ```bash
    flutter run
    ```
 
-#### 網路設定（重要）
+### Network Configuration
 
-由於 API Base URL 是 `http://192.168.4.54`，需要確保：
+**Important:** Since the API is at `http://192.168.4.54`, ensure:
 
-1. **手機和電腦在同一區域網路**
-   - 手機和電腦必須連接到同一個 Wi-Fi
-   - 確保手機可以訪問 `192.168.4.54`
-
-2. **測試網路連線**
-   - 在手機瀏覽器開啟 `http://192.168.4.54/BarcodeValidatorApi/swagger`
-   - 如果能看到 Swagger 頁面，表示網路正常
-
-3. **Android 權限設定**
-   確認 `android/app/src/main/AndroidManifest.xml` 有網路權限（通常在 `<manifest>` 標籤內）：
+1. **Same Network**: Phone and computer must be on the same Wi-Fi
+2. **Test Connection**: Open `http://192.168.4.54/BarcodeValidatorApi/swagger` in phone browser
+3. **Network Permissions**: Already configured in `AndroidManifest.xml`
    ```xml
    <uses-permission android:name="android.permission.INTERNET" />
    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
    ```
 
-4. **如果無法連線**
-   - 檢查防火牆設定
-   - 確認 API 伺服器允許來自手機 IP 的連線
-   - 可以嘗試使用電腦的 IP 地址（而不是 192.168.4.54）
+## 💡 Usage Guide
 
-### 疑難排解
+### Creating a Batch
 
-- **找不到裝置**：確認模擬器已啟動或實體裝置已連接並開啟 USB 偵錯
-- **依賴安裝失敗**：執行 `flutter clean` 後重新 `flutter pub get`
-- **建置錯誤**：檢查 `flutter doctor` 輸出，確認所有工具都已安裝
-- **網路連線失敗**：確認手機和電腦在同一 Wi-Fi，手機可以訪問 API 伺服器
-- **Android 連線失敗**：檢查 `AndroidManifest.xml` 是否有網路權限
-- **API 請求失敗**：確認手機可以訪問 `192.168.4.54`，在手機瀏覽器測試 Swagger 網址
+1. Open the app → **Batch Settings** tab
+2. Tap the **+** button (top right)
+3. Fill in the form:
+   - **Batch Name**: e.g., "LCA1210"
+   - **Start Number**: 5-digit code (e.g., "00001")
+   - **End Number**: 5-digit code (e.g., "99999")
+4. Tap **Create**
+5. The new batch is automatically set as active
 
-### 相關資源
+### Managing Batches
 
-- [Flutter 官方文件](https://docs.flutter.dev/)
-- [Dart 語言指南](https://dart.dev/guides)
-- [Flutter 範例程式碼](https://docs.flutter.dev/cookbook)
+- **Current Batch**: Displays the active batch with:
+  - Batch name and range
+  - Printed count
+  - Allow Duplicate toggle
+  - View Records button
+  - Edit button (only shown if no records exist)
+
+- **All Batch**: Lists inactive batches
+  - Tap "Set Active" to switch current batch
+  - Each batch shows range and printed count
+
+### Viewing Scan Records
+
+1. Switch to **Scan Records** tab
+2. View batch information at the top
+3. **Valid Codes**: Green section showing successful scans
+   - Scroll independently within this section
+4. **Alert Records**: Red section showing failed scans
+   - Scroll independently within this section
+5. Use search bar to filter by code
+6. Pull down to refresh data
+
+### Understanding Notifications
+
+- **Scan Success**: Green notification when code is valid
+- **Out of Range**: Red notification when code is outside batch range
+- **Duplicate Code**: Red notification when code was previously scanned (if duplicate check enabled)
+- Tap notification to view details in app
+
+## 🛠️ Common Commands
+
+```bash
+# Clean build cache
+flutter clean
+
+# Reinstall dependencies
+flutter pub get
+
+# Analyze code
+flutter analyze
+
+# Build APK (Android)
+flutter build apk
+
+# Build iOS (macOS only)
+flutter build ios
+
+# Build for Web
+flutter build web
+```
+
+## 🐛 Troubleshooting
+
+### Device Not Found
+- **Solution**: Verify emulator is running or physical device is connected with USB debugging enabled
+
+### Build Errors
+- **Solution**: Run `flutter clean` then `flutter pub get`
+- Check `flutter doctor` output for missing tools
+
+### API Connection Failed
+- **Solution**: 
+  - Verify phone and computer are on same Wi-Fi
+  - Test API access in phone browser: `http://192.168.4.54/BarcodeValidatorApi/swagger`
+  - Check API server is running
+
+### FCM Token Not Received
+- **Solution**:
+  - Verify `google-services.json` is in `android/app/`
+  - Run `flutter clean` and rebuild
+  - Check Firebase project configuration
+
+### Notifications Not Received
+- **Solution**:
+  - Grant notification permissions (Android 13+)
+  - Verify FCM token is registered in backend database
+  - Test notification from Firebase Console
+
+### Database Constraint Error
+When clearing data, follow the correct order:
+```sql
+-- 1. Clear child table first
+TRUNCATE TABLE VLD_ScanLogs;
+
+-- 2. Then clear parent table
+TRUNCATE TABLE VLD_BatchRules;
+```
+
+## 📚 Additional Resources
+
+- [Flutter Documentation](https://docs.flutter.dev/)
+- [Dart Language Guide](https://dart.dev/guides)
+- [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
+- [Flutter Samples](https://docs.flutter.dev/cookbook)
+
+## 📝 Notes
+
+- Only one batch can be active at a time
+- Batches with existing records cannot be edited (to maintain data integrity)
+- All displayed text is in English for consistency
+- FCM notifications work in foreground, background, and terminated states
+- Pull-to-refresh is available on both Valid Codes and Alert Records sections
+
+## 🔒 Security Notes
+
+- Never commit `google-services.json` or `GoogleService-Info.plist` to public repositories
+- Use environment variables for sensitive configuration in production
+- Enable HTTPS for production API endpoints
+- Implement proper authentication for API access
+
+## 📄 License
+
+[Your License Here]
+
+## 👥 Contributors
+
+[Your Team Information]
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: 2025-11-20
