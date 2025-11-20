@@ -322,24 +322,22 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
               const SizedBox(height: 24),
               
-              // Valid Codes 區塊
+              // Valid Codes 和 Alert Records 各自獨立滑動
               Expanded(
                 child: _isLoading && _codes.isEmpty && _alerts.isEmpty
                     ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                        onRefresh: _loadData,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildValidCodesSection(),
-                              const SizedBox(height: 24),
-                              _buildAlertRecordsSection(),
-                              const SizedBox(height: 24),
-                              _buildBatchSettingsButton(),
-                            ],
+                    : Column(
+                        children: [
+                          // Valid Codes 區塊 - 獨立滑動
+                          Expanded(
+                            child: _buildValidCodesScrollableSection(),
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          // Alert Records 區塊 - 獨立滑動
+                          Expanded(
+                            child: _buildAlertRecordsScrollableSection(),
+                          ),
+                        ],
                       ),
               ),
             ],
@@ -390,12 +388,12 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     );
   }
 
-  /// Valid Codes 區塊
-  Widget _buildValidCodesSection() {
-    
+  /// Valid Codes 區塊（可獨立滑動）
+  Widget _buildValidCodesScrollableSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 標題列
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -419,10 +417,10 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _filteredCodes.isEmpty && _searchQuery.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Center(
+        // 可滑動的內容區域
+        Expanded(
+          child: _filteredCodes.isEmpty && _searchQuery.isNotEmpty
+              ? Center(
                   child: Text(
                     'No codes found matching "$_searchQuery"',
                     style: const TextStyle(
@@ -430,29 +428,40 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                       color: Color(0xFF6A7282),
                     ),
                   ),
-                ),
-              )
-            : Column(
-                children: [
-                  _buildTableHeader(['Code', 'Status', 'Time']),
-                  const SizedBox(height: 12),
-                  ..._filteredCodes.map((code) => _buildTableRow(
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: ListView.builder(
+                    itemCount: _filteredCodes.length + 1, // +1 for header
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        // 表格標題
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildTableHeader(['Code', 'Status', 'Time']),
+                        );
+                      }
+                      final code = _filteredCodes[index - 1];
+                      return _buildTableRow(
                         code: code.code,
                         status: code.status,
                         time: code.timestamp,
                         isAlert: false,
-                      )),
-                ],
-              ),
+                      );
+                    },
+                  ),
+                ),
+        ),
       ],
     );
   }
 
-  /// Alert Records 區塊
-  Widget _buildAlertRecordsSection() {
+  /// Alert Records 區塊（可獨立滑動）
+  Widget _buildAlertRecordsScrollableSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 標題列
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -476,10 +485,10 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _filteredAlerts.isEmpty && _searchQuery.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Center(
+        // 可滑動的內容區域
+        Expanded(
+          child: _filteredAlerts.isEmpty && _searchQuery.isNotEmpty
+              ? Center(
                   child: Text(
                     'No records found for "$_searchQuery"',
                     style: const TextStyle(
@@ -487,20 +496,30 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                       color: Color(0xFF6A7282),
                     ),
                   ),
-                ),
-              )
-            : Column(
-                children: [
-                  _buildTableHeader(['Code', 'Alert', 'Time']),
-                  const SizedBox(height: 12),
-                  ..._filteredAlerts.map((alert) => _buildTableRow(
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: ListView.builder(
+                    itemCount: _filteredAlerts.length + 1, // +1 for header
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        // 表格標題
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildTableHeader(['Code', 'Alert', 'Time']),
+                        );
+                      }
+                      final alert = _filteredAlerts[index - 1];
+                      return _buildTableRow(
                         code: alert.code,
                         status: alert.alertType,
                         time: alert.timestamp,
                         isAlert: true,
-                      )),
-                ],
-              ),
+                      );
+                    },
+                  ),
+                ),
+        ),
       ],
     );
   }
@@ -627,36 +646,6 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     );
   }
 
-  /// Batch Settings 按鈕
-  Widget _buildBatchSettingsButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        onPressed: () {
-          // 切回 Batch Settings 主頁（index=0）。若無回呼則嘗試返回。
-          if (widget.onSwitchTab != null) {
-            widget.onSwitchTab!(0);
-          } else {
-            Navigator.pop(context);
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2B7FFF),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: const Text(
-          'Batch Settings',
-          style: TextStyle(
-            fontSize: 17,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
 
   /// 格式化日期
   String _formatDate(DateTime dateTime) {

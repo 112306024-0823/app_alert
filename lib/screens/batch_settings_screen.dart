@@ -190,7 +190,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
                     // 內容區域
                     Expanded(
-                      child: _batches.isEmpty ? _buildEmptyState() : _buildBatchList(),
+                      child: (_batches.isEmpty && _currentBatch == null) 
+                          ? _buildEmptyState() 
+                          : _buildBatchList(),
                     ),
                   ],
                 ),
