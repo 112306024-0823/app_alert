@@ -88,7 +88,7 @@ flutter devices
 flutter run -d <device_id>
 ```
 
-### 熱重載
+### Hot Reload
 - 按 `r`：快速重載
 - 按 `R`：完整重啟
 - 按 `q`：退出
@@ -146,9 +146,6 @@ flutter build apk      # 建置 Android APK
 4. **警示記錄區塊**（紅色）：失敗或警告的記錄
 5. 使用搜尋框過濾代碼
 6. 下拉即可更新資料
-
-
-
 
 ## 專案結構
 

@@ -509,7 +509,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2B7FFF),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -712,7 +712,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF2B7FFF)),
                           foregroundColor: const Color(0xFF2B7FFF),
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -782,33 +782,11 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 // 表單內容
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFFF), 
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildTextField(
-                        controller: nameController,
-                        label: 'Batch Name',
-                        hint: 'LCA1210',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildCodeInputField(
-                        label: 'Start Number',
-                        onChanged: (value) => startController.text = value,
-                        initialValue: '',
-                      ),
-                      const SizedBox(height: 16),
-                      _buildCodeInputField(
-                        label: 'End Number',
-                        onChanged: (value) => endController.text = value,
-                        initialValue: '',
-                      ),
-                    ],
-                  ),
+                _buildBatchFormContent(
+                  nameController: nameController,
+                  startController: startController,
+                  endController: endController,
+                  nameHint: 'LCA1210',
                 ),
                 const SizedBox(height: 16),
                 // Create 按鈕
@@ -894,33 +872,11 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 // 表單內容
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFFF), 
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildTextField(
-                        controller: nameController,
-                        label: 'Batch Name',
-                        hint: batch.name,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildCodeInputField(
-                        label: 'Start Number',
-                        onChanged: (value) => startController.text = value,
-                        initialValue: batch.startNumber.toString().padLeft(5, '0'),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildCodeInputField(
-                        label: 'End Number',
-                        onChanged: (value) => endController.text = value,
-                        initialValue: batch.endNumber.toString().padLeft(5, '0'),
-                      ),
-                    ],
-                  ),
+                _buildBatchFormContent(
+                  nameController: nameController,
+                  startController: startController,
+                  endController: endController,
+                  nameHint: batch.name,
                 ),
                 const SizedBox(height: 16),
                 // Update 按鈕
@@ -982,14 +938,24 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    // 驗證 Start Number 和 End Number 必須是 5 碼數字
-    if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
-      _showErrorMessage('Start Number should be 5 digits');
+    // 驗證 Start Number 和 End Number 最多 7 碼數字
+    if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
+      _showErrorMessage('Start Number must be a number');
       return;
     }
     
-    if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
-      _showErrorMessage('End Number should be 5 digits');
+    if (start.length > 7) {
+      _showErrorMessage('Start Number must be 7 digits or less');
+      return;
+    }
+    
+    if (end.isEmpty || !RegExp(r'^\d+$').hasMatch(end)) {
+      _showErrorMessage('End Number must be a number');
+      return;
+    }
+    
+    if (end.length > 7) {
+      _showErrorMessage('End Number must be 7 digits or less');
       return;
     }
     
@@ -1049,16 +1015,46 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     }
   }
 
-  /// 驗證碼風格的數字輸入欄位（5 個格子）
-  Widget _buildCodeInputField({
-    required String label,
-    required void Function(String value) onChanged,
-    String initialValue = '',
+  /// 建立批次表單內容（共用）
+  Widget _buildBatchFormContent({
+    required TextEditingController nameController,
+    required TextEditingController startController,
+    required TextEditingController endController,
+    String? nameHint,
   }) {
-    return _CodeInputField(
-      label: label,
-      onChanged: onChanged,
-      initialValue: initialValue,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          _buildTextField(
+            controller: nameController,
+            label: 'Batch Name',
+            hint: nameHint ?? 'LCA1210',
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: startController,
+            label: 'Start Number',
+            hint: 'Max 7 digits',
+            keyboardType: TextInputType.number,
+            maxLength: 7,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: endController,
+            label: 'End Number',
+            hint: 'Max 7 digits',
+            keyboardType: TextInputType.number,
+            maxLength: 7,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1157,14 +1153,24 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    // 驗證 Start Number 和 End Number 必須是 5 碼數字
-    if (start.length != 5 || !RegExp(r'^\d{5}$').hasMatch(start)) {
-      _showErrorMessage('Start Number must be 5 digits');
+    // 驗證 Start Number 和 End Number 最多 7 碼數字
+    if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
+      _showErrorMessage('Start Number must be a number');
       return;
     }
     
-    if (end.length != 5 || !RegExp(r'^\d{5}$').hasMatch(end)) {
-      _showErrorMessage('End Number must be 5 digits');
+    if (start.length > 7) {
+      _showErrorMessage('Start Number must be 7 digits or less');
+      return;
+    }
+    
+    if (end.isEmpty || !RegExp(r'^\d+$').hasMatch(end)) {
+      _showErrorMessage('End Number must be a number');
+      return;
+    }
+    
+    if (end.length > 7) {
+      _showErrorMessage('End Number must be 7 digits or less');
       return;
     }
     
@@ -1227,176 +1233,5 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
       _showErrorMessage('Failed to create batch: $e');
     }
-  }
-}
-
-/// 驗證碼風格的數字輸入欄位（5 個格子）
-class _CodeInputField extends StatefulWidget {
-  final String label;
-  final void Function(String value) onChanged;
-  final String initialValue;
-
-  const _CodeInputField({
-    required this.label,
-    required this.onChanged,
-    this.initialValue = '',
-  });
-
-  @override
-  State<_CodeInputField> createState() => _CodeInputFieldState();
-}
-
-class _CodeInputFieldState extends State<_CodeInputField> {
-  late List<TextEditingController> controllers;
-  late List<FocusNode> focusNodes;
-
-  @override
-  void initState() {
-    super.initState();
-    // 創建 5 個 TextEditingController
-    controllers = List.generate(5, (index) {
-      final controller = TextEditingController();
-      if (widget.initialValue.length > index) {
-        controller.text = widget.initialValue[index];
-      }
-      return controller;
-    });
-
-    // 創建 5 個 FocusNode
-    focusNodes = List.generate(5, (index) => FocusNode());
-  }
-
-  @override
-  void dispose() {
-    // 釋放資源
-    for (var controller in controllers) {
-      controller.dispose();
-    }
-    for (var focusNode in focusNodes) {
-      focusNode.dispose();
-    }
-    super.dispose();
-  }
-
-  // 更新完整值的函數
-  void updateValue() {
-    final value = controllers.map((c) => c.text).join();
-    widget.onChanged(value);
-  }
-
-  // 處理輸入，自動跳轉到下一個輸入框
-  void handleInput(int index, String value) {
-    if (value.isNotEmpty) {
-      // 只保留最後一個輸入的字元（處理複製貼上的情況）
-      final lastChar = value[value.length - 1];
-      if (RegExp(r'^\d$').hasMatch(lastChar)) {
-        controllers[index].text = lastChar;
-        updateValue();
-        
-        // 使用 SchedulerBinding 確保在下一幀更新焦點
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // 跳轉到下一個輸入框
-          if (index < 4) {
-            focusNodes[index + 1].requestFocus();
-          } else {
-            // 最後一個輸入框，收起鍵盤
-            focusNodes[index].unfocus();
-          }
-        });
-      } else {
-        // 如果不是數字，清空輸入框
-        controllers[index].text = '';
-        updateValue();
-      }
-    } else if (value.isEmpty) {
-      // 刪除時跳轉到上一個輸入框
-      controllers[index].text = '';
-      updateValue();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (index > 0) {
-          focusNodes[index - 1].requestFocus();
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 計算每個方格的大小（考慮間距）
-        // 可用寬度減去 Row 的間距（4 個間距，每個約 8px）
-        final availableWidth = constraints.maxWidth;
-        final spacing = 8.0 * 4; // 5 個方格之間有 4 個間距
-        final cellSize = ((availableWidth - spacing) / 5).clamp(40.0, 60.0);
-        // 字體大小根據方格大小調整
-        final fontSize = (cellSize * 0.4).clamp(16.0, 24.0);
-        // 圓角半徑根據方格大小調整
-        final borderRadius = (cellSize * 0.2).clamp(8.0, 12.0);
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.label,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Color(0xFF101828),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(5, (index) {
-                return SizedBox(
-                  width: cellSize,
-                  height: cellSize,
-                  child: TextField(
-                    controller: controllers[index],
-                    focusNode: focusNodes[index],
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    maxLength: 1,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: InputDecoration(
-                      counterText: '',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        borderSide: const BorderSide(color: Color(0xFFD1D5DC)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(borderRadius),
-                        borderSide: const BorderSide(color: Color(0xFF2B7FFF), width: 2),
-                      ),
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    onChanged: (value) => handleInput(index, value),
-                    onTap: () {
-                      // 點擊時自動選中所有文字，方便刪除
-                      controllers[index].selection = TextSelection(
-                        baseOffset: 0,
-                        extentOffset: controllers[index].text.length,
-                      );
-                    },
-                  ),
-                );
-              }),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
