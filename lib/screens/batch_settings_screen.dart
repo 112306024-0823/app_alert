@@ -408,7 +408,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                     flex: 3,
                     child: _buildInfoItem(
                       label: 'Range',
-                      value: '${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
+                      value: '${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -648,7 +648,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           flex: 3,
                           child: _buildInfoItem(
                             label: 'Range',
-                            value: '${b.startNumber} - ${b.endNumber}',
+                            value: '${b.startNumber.toString().padLeft(7, '0')} - ${b.endNumber.toString().padLeft(7, '0')}',
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -671,7 +671,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         onPressed: () async {
                           final ok = await _showConfirm(
                             title: 'Set Active',
-                            message: 'Set ${b.name} (${b.startNumber} - ${b.endNumber}) as the current batch?\nOther batches will be deactivated.',
+                            message: 'Set ${b.name} (${b.startNumber.toString().padLeft(7, '0')} - ${b.endNumber.toString().padLeft(7, '0')}) as the current batch?\nOther batches will be deactivated.',
                             confirmText: 'Set Active',
                           );
                           if (!ok) return;
@@ -694,7 +694,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                               _isLoading = false;
                             });
 
-                            _showSuccessMessage('Switched current batch to ${b.name} (${b.startNumber} - ${b.endNumber})');
+                            _showSuccessMessage('Switched current batch to ${b.name} (${b.startNumber.toString().padLeft(7, '0')} - ${b.endNumber.toString().padLeft(7, '0')})');
 
                             await _loadBatchesFromApi();
                           } catch (e) {
@@ -834,88 +834,103 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
   void _showEditBatchDialog(Batch batch) {
     final nameController = TextEditingController(text: batch.name);
-    final startController = TextEditingController(text: batch.startNumber.toString());
-    final endController = TextEditingController(text: batch.endNumber.toString());
+    final startController = TextEditingController(text: batch.startNumber.toString().padLeft(7, '0'));
+    final endController = TextEditingController(text: batch.endNumber.toString().padLeft(7, '0'));
+    String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 標題欄
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Edit Batch',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 標題欄
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Edit Batch',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // 表單內容
+                  _buildBatchFormContent(
+                    nameController: nameController,
+                    startController: startController,
+                    endController: endController,
+                    nameHint: batch.name,
+                  ),
+                  // 錯誤訊息顯示
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                // 表單內容
-                _buildBatchFormContent(
-                  nameController: nameController,
-                  startController: startController,
-                  endController: endController,
-                  nameHint: batch.name,
-                ),
-                const SizedBox(height: 16),
-                // Update 按鈕
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () => _handleUpdateBatch(
-                      context,
-                      batch,
-                      nameController.text,
-                      startController.text,
-                      endController.text,  
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2B7FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 16),
+                  // Update 按鈕
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => _handleUpdateBatch(
+                        context,
+                        batch,
+                        nameController.text,
+                        startController.text,
+                        endController.text,
+                        onError: (msg) => setDialogState(() => errorMessage = msg),
                       ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2B7FFF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Save',
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: Colors.white,
-                            ),
-                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -931,31 +946,41 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     Batch original,
     String name,
     String start,
-    String end,
-  ) async {
+    String end, {
+    void Function(String)? onError,
+  }) async {
+    // 使用對話框內的錯誤顯示，如果有提供 onError 回調
+    void showError(String message) {
+      if (onError != null) {
+        onError(message);
+      } else {
+        _showErrorMessage(message);
+      }
+    }
+
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      _showErrorMessage('Please fill in all fields');
+      showError('⚠️ Please fill in all fields');
       return;
     }
     
     // 驗證 Start Number 和 End Number 必須正好 7 碼數字
     if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
-      _showErrorMessage('Start Number must be a number');
+      showError('⚠️ Start Number must be a number');
       return;
     }
     
     if (start.length != 7) {
-      _showErrorMessage('Start Number must be exactly 7 digits');
+      showError('⚠️ Start Number must be exactly 7 digits');
       return;
     }
     
     if (end.isEmpty || !RegExp(r'^\d+$').hasMatch(end)) {
-      _showErrorMessage('End Number must be a number');
+      showError('⚠️ End Number must be a number');
       return;
     }
     
     if (end.length != 7) {
-      _showErrorMessage('End Number must be exactly 7 digits');
+      showError('⚠️ End Number must be exactly 7 digits');
       return;
     }
     
@@ -964,12 +989,12 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final endNum = int.tryParse(end);
     
     if (startNum == null || endNum == null) {
-      _showErrorMessage('Number format error');
+      showError('⚠️ Number format error');
       return;
     }
     
     if (endNum <= startNum) {
-      _showErrorMessage('End Number must be greater than Start Number');
+      showError('⚠️ End Number must be greater than Start Number');
       return;
     }
 
@@ -983,10 +1008,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       existingNames.add(batch.name.trim().toLowerCase());
     }
     if (existingNames.contains(normalizedName)) {
-      _showNotificationBanner(
-        type: NotificationType.warning,
-        message: 'This batch name already exists, please enter a different name',
-      );
+      showError('⚠️ This batch name already exists');
       return;
     }
 
@@ -1114,7 +1136,6 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
   }
 
 
-
   
 
   String? _extractBatchIdFromResponse(
@@ -1134,10 +1155,20 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     BuildContext context,
     String name,
     String start,
-    String end,
-  ) async {
+    String end, {
+    void Function(String)? onError,
+  }) async {
+    // 使用對話框內的錯誤顯示，如果有提供 onError 回調
+    void showError(String message) {
+      if (onError != null) {
+        onError(message);
+      } else {
+        _showErrorMessage(message);
+      }
+    }
+
     if (name.isEmpty || start.isEmpty || end.isEmpty) {
-      _showErrorMessage('Please fill in all fields');
+      showError('⚠️ Please fill in all fields');
       return;
     }
 
@@ -1150,31 +1181,28 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       existingNames.add(batch.name.trim().toLowerCase());
     }
     if (existingNames.contains(normalizedName)) {
-      _showNotificationBanner(
-        type: NotificationType.warning,
-        message: 'This batch name already exists, please enter a different name',
-      );
+      showError('⚠️ This batch name already exists');
       return;
     }
     
     // 驗證 Start Number 和 End Number 必須正好 7 碼數字
     if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
-      _showErrorMessage('Start Number must be a number');
+      showError('⚠️ Start Number must be a number');
       return;
     }
     
     if (start.length != 7) {
-      _showErrorMessage('Start Number must be exactly 7 digits');
+      showError('⚠️ Start Number must be exactly 7 digits');
       return;
     }
     
     if (end.isEmpty || !RegExp(r'^\d+$').hasMatch(end)) {
-      _showErrorMessage('End Number must be a number');
+      showError('⚠️ End Number must be a number');
       return;
     }
     
     if (end.length != 7) {
-      _showErrorMessage('End Number must be exactly 7 digits');
+      showError('⚠️ End Number must be exactly 7 digits');
       return;
     }
     
@@ -1183,12 +1211,12 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final endNum = int.tryParse(end);
     
     if (startNum == null || endNum == null) {
-      _showErrorMessage('Number format error');
+      showError('⚠️ Number format error');
       return;
     }
     
     if (endNum <= startNum) {
-      _showErrorMessage('End Number must be greater than Start Number');
+      showError('⚠️ End Number must be greater than Start Number');
       return;
     }
 

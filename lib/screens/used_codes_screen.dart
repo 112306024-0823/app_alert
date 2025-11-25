@@ -243,7 +243,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Batch Range: ${_currentBatch!.startNumber} - ${_currentBatch!.endNumber}',
+                          'Batch Range: ${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
                           style: const TextStyle(
                             fontSize: 15,
                             color: Color(0xFF6A7282),
