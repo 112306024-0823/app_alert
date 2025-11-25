@@ -938,14 +938,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    // 驗證 Start Number 和 End Number 最多 7 碼數字
+    // 驗證 Start Number 和 End Number 必須正好 7 碼數字
     if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
       _showErrorMessage('Start Number must be a number');
       return;
     }
     
-    if (start.length > 7) {
-      _showErrorMessage('Start Number must be 7 digits or less');
+    if (start.length != 7) {
+      _showErrorMessage('Start Number must be exactly 7 digits');
       return;
     }
     
@@ -954,8 +954,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    if (end.length > 7) {
-      _showErrorMessage('End Number must be 7 digits or less');
+    if (end.length != 7) {
+      _showErrorMessage('End Number must be exactly 7 digits');
       return;
     }
     
@@ -1039,7 +1039,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           _buildTextField(
             controller: startController,
             label: 'Start Number',
-            hint: 'Max 7 digits',
+            hint: 'Exactly 7 digits',
             keyboardType: TextInputType.number,
             maxLength: 7,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1048,7 +1048,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           _buildTextField(
             controller: endController,
             label: 'End Number',
-            hint: 'Max 7 digits',
+            hint: 'Exactly 7 digits',
             keyboardType: TextInputType.number,
             maxLength: 7,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1113,6 +1113,10 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     );
   }
 
+
+
+  
+
   String? _extractBatchIdFromResponse(
     Map<String, dynamic> response,
   ) {
@@ -1153,14 +1157,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    // 驗證 Start Number 和 End Number 最多 7 碼數字
+    // 驗證 Start Number 和 End Number 必須正好 7 碼數字
     if (start.isEmpty || !RegExp(r'^\d+$').hasMatch(start)) {
       _showErrorMessage('Start Number must be a number');
       return;
     }
     
-    if (start.length > 7) {
-      _showErrorMessage('Start Number must be 7 digits or less');
+    if (start.length != 7) {
+      _showErrorMessage('Start Number must be exactly 7 digits');
       return;
     }
     
@@ -1169,8 +1173,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
       return;
     }
     
-    if (end.length > 7) {
-      _showErrorMessage('End Number must be 7 digits or less');
+    if (end.length != 7) {
+      _showErrorMessage('End Number must be exactly 7 digits');
       return;
     }
     
