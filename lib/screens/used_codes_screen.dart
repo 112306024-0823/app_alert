@@ -491,7 +491,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                     ),
                   ),
                 )
-              : MediaQuery.of(context).size.width > 380
+              : MediaQuery.of(context).size.width > 370
                   // 一般屏幕：不需要橫向滾動
                   ? RefreshIndicator(
                       onRefresh: _loadData,
@@ -771,7 +771,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             child: Text(
               status,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
               ),
             ),
