@@ -221,11 +221,17 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isLargeScreen = screenWidth > 900;
+    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : 16.0);
+    final verticalPadding = isLargeScreen ? 32.0 : (isTablet ? 24.0 : 16.0);
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -237,15 +243,15 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                         Text(
                           'Batch Name: ${_currentBatch!.name}',
                           style: const TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           'Batch Range: ${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
                             color: Color(0xFF6A7282),
                           ),
                         ),
@@ -257,29 +263,29 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                         Text(
                           'No Active Batch',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.w500,
                             color: Color(0xFF6A7282),
                           ),
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 2),
                         Text(
                           'Please create and activate a batch first',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
                             color: Color(0xFF6A7282),
                           ),
                         ),
                       ],
                     ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               
               // Ignore duplicate check 提醒（根據 API 取得的 allowDuplicate 狀態顯示）
               if (_allowDuplicate == true)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(top: 12),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(top: 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF3CD),
                     borderRadius: BorderRadius.circular(10),
@@ -301,7 +307,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   ),
                 ),
               if (_allowDuplicate == true)
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
               
               // 搜尋框和刷新按鈕
               Row(
@@ -320,7 +326,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               
               // Valid Codes 和 Alert Records 各自獨立滑動
               Expanded(
@@ -332,7 +338,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                           Expanded(
                             child: _buildValidCodesScrollableSection(),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           // Alert Records 區塊 - 獨立滑動
                           Expanded(
                             child: _buildAlertRecordsScrollableSection(),
@@ -437,7 +443,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                       if (index == 0) {
                         // 表格標題
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: _buildTableHeader(['Code', 'Status', 'Time']),
                         );
                       }
@@ -484,7 +490,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         // 可滑動的內容區域
         Expanded(
           child: _filteredAlerts.isEmpty && _searchQuery.isNotEmpty
@@ -505,7 +511,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                       if (index == 0) {
                         // 表格標題
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: _buildTableHeader(['Code', 'Alert', 'Time']),
                         );
                       }
@@ -585,7 +591,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     required bool isAlert,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -601,18 +607,21 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             child: Text(
               code,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 12,
                 color: Color(0xFF101828),
               ),
             ),
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              status,
-              style: TextStyle(
-                fontSize: 15,
-                color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                status,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
+                ),
               ),
             ),
           ),
@@ -620,24 +629,13 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             flex: 2,
             child: Align(
               alignment: Alignment.centerRight,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatDate(time),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6A7282),
-                  ),
+              child: Text(
+                _formatDateTime(time),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6A7282),
                 ),
-                Text(
-                  _formatTime(time),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6A7282),
-                  ),
-                ),
-              ],
+                textAlign: TextAlign.right,
               ),
             ),
           ),
@@ -649,12 +647,17 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
 
   /// 格式化日期
   String _formatDate(DateTime dateTime) {
-    return '${dateTime.year}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')}';
+    return '${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')}';
   }
 
   /// 格式化時間
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 格式化日期時間
+  String _formatDateTime(DateTime dateTime) {
+    return '${_formatDate(dateTime)} ${_formatTime(dateTime)}';
   }
 
   @override

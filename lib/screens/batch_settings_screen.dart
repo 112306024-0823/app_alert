@@ -130,7 +130,15 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double contentTopPadding = _isNotificationVisible ? 96 : 24;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isLargeScreen = screenWidth > 900;
+    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : 24.0);
+    final verticalPadding = isLargeScreen ? 32.0 : (isTablet ? 24.0 : 24.0);
+    final double contentTopPadding = _isNotificationVisible 
+        ? (isLargeScreen ? 120.0 : (isTablet ? 108.0 : 96.0))
+        : verticalPadding;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -138,9 +146,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           children: [
             if (_notificationType != null && _notificationMessage != null)
               Positioned(
-                top: 16,
-                left: 0,
-                right: 0,
+                top: isLargeScreen ? 24.0 : (isTablet ? 20.0 : 16.0),
+                left: horizontalPadding,
+                right: horizontalPadding,
                 child: AnimatedSlide(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
@@ -160,7 +168,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
               ),
             Positioned.fill(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(24, contentTopPadding, 24, 24),
+                padding: EdgeInsets.fromLTRB(horizontalPadding, contentTopPadding, horizontalPadding, verticalPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -746,85 +754,100 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final nameController = TextEditingController();
     final startController = TextEditingController();
     final endController = TextEditingController();
+    String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 標題欄
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'New Batch',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: const Color(0xFFEFEFEF), // 亮灰色背景
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 標題欄
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'New Batch',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // 表單內容
+                  _buildBatchFormContent(
+                    nameController: nameController,
+                    startController: startController,
+                    endController: endController,
+                    nameHint: 'LCA1210',
+                  ),
+                  // 錯誤訊息顯示
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-                // 表單內容
-                _buildBatchFormContent(
-                  nameController: nameController,
-                  startController: startController,
-                  endController: endController,
-                  nameHint: 'LCA1210',
-                ),
-                const SizedBox(height: 16),
-                // Create 按鈕
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () => _handleCreateBatch(
-                      context,
-                      nameController.text,
-                      startController.text,
-                      endController.text,
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2B7FFF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 16),
+                  // Create 按鈕
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => _handleCreateBatch(
+                        context,
+                        nameController.text,
+                        startController.text,
+                        endController.text,
+                        onError: (msg) => setDialogState(() => errorMessage = msg),
                       ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2B7FFF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Create',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Create',
-                            style: TextStyle(
-                              fontSize: 17,
-                              color: Colors.white,
-                            ),
-                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

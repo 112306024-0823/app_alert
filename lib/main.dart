@@ -108,8 +108,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// 底部導航欄
   Widget _buildBottomNavigation() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isLargeScreen = screenWidth > 900;
+    final verticalPadding = isLargeScreen ? 16.0 : (isTablet ? 14.0 : 12.0);
+    
     return Container(
-      height: 84,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -117,20 +121,24 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(
-              icon: Icons.batch_prediction,
-              label: 'Batch Settings',
-              index: 0,
-            ),
-            _buildNavItem(
-              icon: Icons.assignment,
-              label: 'Scan Records',
-              index: 1,
-            ),
-          ],
+        top: false,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: verticalPadding),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                icon: Icons.batch_prediction,
+                label: 'Batch Settings',
+                index: 0,
+              ),
+              _buildNavItem(
+                icon: Icons.assignment,
+                label: 'Scan Records',
+                index: 1,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -143,6 +151,11 @@ class _MyHomePageState extends State<MyHomePage> {
     required int index,
   }) {
     final isSelected = _currentIndex == index;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final iconSize = isTablet ? 22.0 : 20.0;
+    final fontSize = isTablet ? 11.0 : 10.0;
+    final spacing = isTablet ? 6.0 : 4.0;
 
     return Expanded(
       child: InkWell(
@@ -152,18 +165,20 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         },
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
+              size: iconSize,
               color: isSelected ? const Color(0xFF2B7FFF) : const Color(0xFF9CA3AF),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: spacing),
             Text(
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: fontSize,
                 color: isSelected ? const Color(0xFF2B7FFF) : const Color(0xFF9CA3AF),
               ),
             ),
