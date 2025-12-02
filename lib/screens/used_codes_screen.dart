@@ -318,7 +318,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                                     Text(
                                       'Allow Duplicate',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         color: Color(0xFF856404),
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -462,7 +462,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             const Text(
               '✓ Valid Codes',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF00A63E),
               ),
@@ -472,7 +472,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   ? 'Printed: ${_codes.length}'
                   : 'Printed: ${_filteredCodes.length} / ${_codes.length}',
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 color: Color(0xFF00A63E),
               ),
             ),
@@ -491,7 +491,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                     ),
                   ),
                 )
-              : MediaQuery.of(context).size.width > 370
+              : MediaQuery.of(context).size.width > 320
                   // 一般屏幕：不需要橫向滾動
                   ? RefreshIndicator(
                       onRefresh: _loadData,
@@ -566,7 +566,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             const Text(
               '⚠ Alert Records',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFFE7000B),
               ),
@@ -576,7 +576,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   ? 'Alerted: ${_alerts.length}'
                   : 'Alerted: ${_filteredAlerts.length} / ${_alerts.length}',
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 color: Color(0xFFE7000B),
               ),
             ),
@@ -595,7 +595,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                     ),
                   ),
                 )
-              : MediaQuery.of(context).size.width > 380
+              : MediaQuery.of(context).size.width > 320
                   // 一般屏幕：不需要橫向滾動
                   ? RefreshIndicator(
                       onRefresh: _loadData,
@@ -771,7 +771,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             child: Text(
               status,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
               ),
             ),

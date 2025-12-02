@@ -180,9 +180,9 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         const Text(
                           'Batch',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.w400,
-                            height: 42 / 28,
+                            height: 42 / 24,
                           ),
                         ),
                         IconButton(
@@ -222,7 +222,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           const Text(
             'No batches yet',
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 15,
               color: Color(0xFF99A1AF),
             ),
           ),
@@ -230,7 +230,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           const Text(
             'Click the + button to create the first batch',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13,
               color: Color(0xFF99A1AF),
             ),
           ),
@@ -336,7 +336,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         const Text(
           'Current Batch',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -369,7 +369,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           child: Text(
                             _currentBatch!.name,
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF101828),
                             ),
@@ -420,7 +420,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       value: '${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     flex: 2,
                     child: _buildInfoItem(
@@ -446,7 +446,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       child: Text(
                         'Allow Duplicate',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF101828),
                         ),
@@ -504,7 +504,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                 ),
               ),
               
-              const SizedBox(height: 10),
+              const SizedBox(height: 5),
               
               // 查看記錄按鈕
               SizedBox(
@@ -518,7 +518,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2B7FFF),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -563,14 +563,14 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF101828),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF101828),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -589,7 +589,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         const Text(
           'All Batch',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -621,7 +621,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           child: Text(
                             b.name,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF101828),
                             ),
@@ -721,7 +721,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF2B7FFF)),
                           foregroundColor: const Color(0xFF2B7FFF),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -767,7 +767,10 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: BoxConstraints(
+              maxWidth: 400,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -781,7 +784,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       const Text(
                         'New Batch',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -791,25 +794,35 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  // 表單內容
-                  _buildBatchFormContent(
-                    nameController: nameController,
-                    startController: startController,
-                    endController: endController,
-                    nameHint: 'LCA1210',
-                  ),
-                  // 錯誤訊息顯示
+                  // 錯誤訊息顯示（在標題下方）
                   if (errorMessage != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       errorMessage!,
                       style: const TextStyle(
                         color: Colors.red,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  // 可滾動的表單內容
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 表單內容
+                          _buildBatchFormContent(
+                            nameController: nameController,
+                            startController: startController,
+                            endController: endController,
+                            nameHint: 'LCA1210',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   // Create 按鈕
                   SizedBox(
@@ -841,7 +854,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           : const Text(
                               'Create',
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 15,
                                 color: Colors.white,
                               ),
                             ),
@@ -872,7 +885,10 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: BoxConstraints(
+              maxWidth: 400,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -886,7 +902,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       const Text(
                         'Edit Batch',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -896,25 +912,35 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  // 表單內容
-                  _buildBatchFormContent(
-                    nameController: nameController,
-                    startController: startController,
-                    endController: endController,
-                    nameHint: batch.name,
-                  ),
-                  // 錯誤訊息顯示
+                  // 錯誤訊息顯示（在標題下方）
                   if (errorMessage != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       errorMessage!,
                       style: const TextStyle(
                         color: Colors.red,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  // 可滾動的表單內容
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 表單內容
+                          _buildBatchFormContent(
+                            nameController: nameController,
+                            startController: startController,
+                            endController: endController,
+                            nameHint: batch.name,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   // Update 按鈕
                   SizedBox(
@@ -947,7 +973,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
                           : const Text(
                               'Save',
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 15,
                                 color: Colors.white,
                               ),
                             ),
@@ -1119,7 +1145,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             color: Color(0xFF101828),
           ),
         ),
@@ -1132,7 +1158,7 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Color(0xFF717182),
             ),
             filled: true,
