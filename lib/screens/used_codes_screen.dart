@@ -219,12 +219,61 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
     return DateTime.now();
   }
 
+  /// 根據資料量計算 Valid Codes 區塊的 flex 值
+  int _getValidCodesFlex() {
+    final codesCount = _filteredCodes.length;
+    final alertsCount = _filteredAlerts.length;
+    
+    // 如果兩邊都沒資料，平分
+    if (codesCount == 0 && alertsCount == 0) return 1;
+    
+    // 如果 Valid Codes 沒資料，給最小空間
+    if (codesCount == 0) return 1;
+    
+    // 如果 Alert Records 沒資料，Valid Codes 佔更多空間
+    if (alertsCount == 0) return 3;
+    
+    // 如果 Valid Codes 資料很少（≤3筆），給較小空間
+    if (codesCount <= 3 && alertsCount > 3) return 1;
+    
+    // 如果 Alert Records 資料很少（≤3筆），Valid Codes 佔更多空間
+    if (alertsCount <= 3 && codesCount > 3) return 2;
+    
+    // 預設平分
+    return 1;
+  }
+
+  /// 根據資料量計算 Alert Records 區塊的 flex 值
+  int _getAlertRecordsFlex() {
+    final codesCount = _filteredCodes.length;
+    final alertsCount = _filteredAlerts.length;
+    
+    // 如果兩邊都沒資料，平分
+    if (codesCount == 0 && alertsCount == 0) return 1;
+    
+    // 如果 Alert Records 沒資料，給最小空間
+    if (alertsCount == 0) return 1;
+    
+    // 如果 Valid Codes 沒資料，Alert Records 佔更多空間
+    if (codesCount == 0) return 3;
+    
+    // 如果 Alert Records 資料很少（≤3筆），給較小空間
+    if (alertsCount <= 3 && codesCount > 3) return 1;
+    
+    // 如果 Valid Codes 資料很少（≤3筆），Alert Records 佔更多空間
+    if (codesCount <= 3 && alertsCount > 3) return 2;
+    
+    // 預設平分
+    return 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 900;
-    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : 16.0);
+    final isSmallScreen = screenWidth < 360;
+    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : (isSmallScreen ? 12.0 : 20.0));
     final verticalPadding = isLargeScreen ? 32.0 : (isTablet ? 24.0 : 16.0);
     
     return Scaffold(
@@ -240,16 +289,49 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Batch Name: ${_currentBatch!.name}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Batch Name: ${_currentBatch!.name}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (_allowDuplicate == true) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF3CD),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.warning_amber,
+                                      color: Color(0xFF856404),
+                                      size: 14,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Allow Duplicate',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF856404),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Batch Range: ${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
+                          'Range: ${_currentBatch!.startNumber.toString().padLeft(7, '0')} - ${_currentBatch!.endNumber.toString().padLeft(7, '0')}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF6A7282),
@@ -263,7 +345,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                         Text(
                           'No Active Batch',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.w500,
                             color: Color(0xFF6A7282),
                           ),
@@ -279,35 +361,6 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                       ],
                     ),
               const SizedBox(height: 12),
-              
-              // Ignore duplicate check 提醒（根據 API 取得的 allowDuplicate 狀態顯示）
-              if (_allowDuplicate == true)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(top: 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3CD),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.warning_amber, color: Color(0xFF856404), size: 18),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Duplicate check disabled for current batch',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF856404),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              if (_allowDuplicate == true)
-                const SizedBox(height: 12),
               
               // 搜尋框和刷新按鈕
               Row(
@@ -329,6 +382,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               const SizedBox(height: 12),
               
               // Valid Codes 和 Alert Records 各自獨立滑動
+              // 根據資料量動態調整空間分配
               Expanded(
                 child: _isLoading && _codes.isEmpty && _alerts.isEmpty
                     ? const Center(child: CircularProgressIndicator())
@@ -336,11 +390,13 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                         children: [
                           // Valid Codes 區塊 - 獨立滑動
                           Expanded(
+                            flex: _getValidCodesFlex(),
                             child: _buildValidCodesScrollableSection(),
                           ),
                           const SizedBox(height: 12),
                           // Alert Records 區塊 - 獨立滑動
                           Expanded(
+                            flex: _getAlertRecordsFlex(),
                             child: _buildAlertRecordsScrollableSection(),
                           ),
                         ],
@@ -406,7 +462,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             const Text(
               '✓ Valid Codes',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF00A63E),
               ),
@@ -417,13 +473,13 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   : 'Printed: ${_filteredCodes.length} / ${_codes.length}',
               style: const TextStyle(
                 fontSize: 15,
-                color: Color(0xFF4A5565),
+                color: Color(0xFF00A63E),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        // 可滑動的內容區域
+        // 可滑動的內容區域（支持橫向和縱向滾動）
         Expanded(
           child: _filteredCodes.isEmpty && _searchQuery.isNotEmpty
               ? Center(
@@ -435,28 +491,64 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                     ),
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: ListView.builder(
-                    itemCount: _filteredCodes.length + 1, // +1 for header
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // 表格標題
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _buildTableHeader(['Code', 'Status', 'Time']),
-                        );
-                      }
-                      final code = _filteredCodes[index - 1];
-                      return _buildTableRow(
-                        code: code.code,
-                        status: code.status,
-                        time: code.timestamp,
-                        isAlert: false,
-                      );
-                    },
-                  ),
-                ),
+              : MediaQuery.of(context).size.width > 380
+                  // 一般屏幕：不需要橫向滾動
+                  ? RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: ListView.builder(
+                        itemCount: _filteredCodes.length + 1, // +1 for header
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            // 表格標題
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildTableHeader(['No', 'Code', 'Status', 'Time']),
+                            );
+                          }
+                          final code = _filteredCodes[index - 1];
+                          return _buildTableRow(
+                            rowNumber: index,
+                            code: code.code,
+                            status: code.status,
+                            time: code.timestamp,
+                            isAlert: false,
+                          );
+                        },
+                      ),
+                    )
+                  // 極小屏幕：支持橫向滾動
+                  : Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: 420, // 固定最小寬度確保可橫向滾動
+                          child: RefreshIndicator(
+                            onRefresh: _loadData,
+                            child: ListView.builder(
+                              itemCount: _filteredCodes.length + 1, // +1 for header
+                              itemBuilder: (context, index) {
+                                if (index == 0) {
+                                  // 表格標題
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: _buildTableHeader(['No', 'Code', 'Status', 'Time']),
+                                  );
+                                }
+                                final code = _filteredCodes[index - 1];
+                                return _buildTableRow(
+                                  rowNumber: index,
+                                  code: code.code,
+                                  status: code.status,
+                                  time: code.timestamp,
+                                  isAlert: false,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
         ),
       ],
     );
@@ -474,7 +566,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
             const Text(
               '⚠ Alert Records',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFFE7000B),
               ),
@@ -485,13 +577,13 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                   : 'Alerted: ${_filteredAlerts.length} / ${_alerts.length}',
               style: const TextStyle(
                 fontSize: 15,
-                color: Color(0xFF4A5565),
+                color: Color(0xFFE7000B),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        // 可滑動的內容區域
+        // 可滑動的內容區域（支持橫向和縱向滾動）
         Expanded(
           child: _filteredAlerts.isEmpty && _searchQuery.isNotEmpty
               ? Center(
@@ -503,28 +595,64 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
                     ),
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: ListView.builder(
-                    itemCount: _filteredAlerts.length + 1, // +1 for header
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // 表格標題
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _buildTableHeader(['Code', 'Alert', 'Time']),
-                        );
-                      }
-                      final alert = _filteredAlerts[index - 1];
-                      return _buildTableRow(
-                        code: alert.code,
-                        status: alert.alertType,
-                        time: alert.timestamp,
-                        isAlert: true,
-                      );
-                    },
-                  ),
-                ),
+              : MediaQuery.of(context).size.width > 380
+                  // 一般屏幕：不需要橫向滾動
+                  ? RefreshIndicator(
+                      onRefresh: _loadData,
+                      child: ListView.builder(
+                        itemCount: _filteredAlerts.length + 1, 
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            // 表格標題
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildTableHeader(['No', 'Code', 'Alert', 'Time']),
+                            );
+                          }
+                          final alert = _filteredAlerts[index - 1];
+                          return _buildTableRow(
+                            rowNumber: index,
+                            code: alert.code,
+                            status: alert.alertType,
+                            time: alert.timestamp,
+                            isAlert: true,
+                          );
+                        },
+                      ),
+                    )
+                  // 極小屏幕：支持橫向滾動
+                  : Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: 420, // 固定最小寬度確保可橫向滾動
+                          child: RefreshIndicator(
+                            onRefresh: _loadData,
+                            child: ListView.builder(
+                              itemCount: _filteredAlerts.length + 1, // +1 for header
+                              itemBuilder: (context, index) {
+                                if (index == 0) {
+                                  // 表格標題
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: _buildTableHeader(['No', 'Code', 'Alert', 'Time']),
+                                  );
+                                }
+                                final alert = _filteredAlerts[index - 1];
+                                return _buildTableRow(
+                                  rowNumber: index,
+                                  code: alert.code,
+                                  status: alert.alertType,
+                                  time: alert.timestamp,
+                                  isAlert: true,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
         ),
       ],
     );
@@ -544,18 +672,19 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       ),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 35,
             child: Text(
               headers[0],
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: Color(0xFF4A5565),
               ),
             ),
           ),
+          const SizedBox(width: 4),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Text(
               headers[1],
               style: const TextStyle(
@@ -564,12 +693,24 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 4),
+          Expanded(
+            flex: 2,
+            child: Text(
+              headers[2],
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF4A5565),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Expanded(
             flex: 2,
             child: Align(
               alignment: Alignment.centerRight,
               child: Text(
-                headers[2],
+                headers[3],
                 style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF4A5565),
@@ -585,6 +726,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
 
   /// 表格資料列
   Widget _buildTableRow({
+    required int rowNumber,
     required String code,
     required String status,
     required DateTime time,
@@ -602,6 +744,17 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
       ),
       child: Row(
         children: [
+          SizedBox(
+            width: 35,
+            child: Text(
+              rowNumber.toString(),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6A7282),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           Expanded(
             flex: 2,
             child: Text(
@@ -612,19 +765,18 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 4),
           Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text(
-                status,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
-                ),
+            flex: 2,
+            child: Text(
+              status,
+              style: TextStyle(
+                fontSize: 13,
+                color: isAlert ? const Color(0xFFE7000B) : const Color(0xFF00A63E),
               ),
             ),
           ),
+          const SizedBox(width: 4),
           Expanded(
             flex: 2,
             child: Align(
@@ -632,7 +784,7 @@ class _UsedCodesScreenState extends State<UsedCodesScreen> {
               child: Text(
                 _formatDateTime(time),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Color(0xFF6A7282),
                 ),
                 textAlign: TextAlign.right,

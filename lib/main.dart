@@ -111,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 900;
-    final verticalPadding = isLargeScreen ? 16.0 : (isTablet ? 14.0 : 12.0);
+    final verticalPadding = isLargeScreen ? 12.0 : (isTablet ? 10.0 : 8.0);
     
     return Container(
       decoration: const BoxDecoration(
@@ -153,9 +153,9 @@ class _MyHomePageState extends State<MyHomePage> {
     final isSelected = _currentIndex == index;
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
-    final iconSize = isTablet ? 22.0 : 20.0;
-    final fontSize = isTablet ? 11.0 : 10.0;
-    final spacing = isTablet ? 6.0 : 4.0;
+    final iconSize = isTablet ? 20.0 : 18.0;
+    final fontSize = isTablet ? 10.0 : 9.0;
+    final spacing = isTablet ? 4.0 : 3.0;
 
     return Expanded(
       child: InkWell(

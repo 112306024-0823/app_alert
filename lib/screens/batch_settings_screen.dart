@@ -133,7 +133,8 @@ class _BatchSettingsScreenState extends State<BatchSettingsScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 900;
-    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : 24.0);
+    final isSmallScreen = screenWidth < 360;
+    final horizontalPadding = isLargeScreen ? 48.0 : (isTablet ? 32.0 : (isSmallScreen ? 16.0 : 24.0));
     final verticalPadding = isLargeScreen ? 32.0 : (isTablet ? 24.0 : 24.0);
     final double contentTopPadding = _isNotificationVisible 
         ? (isLargeScreen ? 120.0 : (isTablet ? 108.0 : 96.0))
